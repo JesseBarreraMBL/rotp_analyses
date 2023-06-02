@@ -1,0 +1,1016 @@
+---
+title: "ROTP Analyses"
+author: "Jesse Barrera"
+output: html_document
+date: "2023-05-06"
+---
+
+```{r}
+
+
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+
+# Load packages
+
+```{r}
+
+library (readr)
+library(dplyr)
+library(psych)
+library(lubridate)
+library(mice)
+library(tidyr)
+library(lme4)
+library(jtools)
+library(sjPlot)
+library(ggplot2)
+library(GGally)
+library(haven)
+library(stats)
+library(mice)
+library(broom.mixed)
+library(utils)
+library(ggeffects)
+
+```
+
+# Import data
+
+```{r}
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Deidentified Data")
+
+rotp_merged <- read.csv("ROTP_Merged_Deidentified.csv")
+
+biomarkers <- read.csv("H48_CRP_data_0_imputed.csv")
+
+```
+
+# Create a long dataframe of physio and non-physio data
+
+## Remove unecessary columns
+
+```{r}
+
+rotp_behavioral <- rotp_merged %>% 
+  select(-c(X))
+
+```
+
+## Create separate physio and non-physio dataframes
+
+```{r}
+
+rotp_physio <- rotp_behavioral %>% 
+  select(contains("_physio")) %>% 
+  select(!(contains("non"))) %>% 
+  mutate(participant_id = as.factor(rotp_behavioral$participant_id),
+         condition = as.factor(rotp_behavioral$condition_physio)) %>% 
+  filter(!is.na(condition))
+
+rotp_non_physio <- rotp_behavioral %>% 
+  select(contains("non_physio")) %>% 
+  mutate(participant_id = as.factor(rotp_behavioral$participant_id),
+         condition = as.factor(rotp_behavioral$condition_non_physio))  %>% 
+  filter(!is.na(condition))
+
+
+```
+
+## Create separate dataframes for each timepoint
+
+```{r}
+
+# Physio
+
+rotp_physio_t5 <- rotp_physio %>% 
+  select(contains("_t5")) %>% 
+  mutate(participant_id = rotp_physio$participant_id,
+         condition = rotp_physio$condition,
+         timepoint = 5)
+
+rotp_physio_t6 <- rotp_physio %>% 
+  select(contains("_t6")) %>% 
+  mutate(participant_id = rotp_physio$participant_id,
+         condition = rotp_physio$condition,
+         timepoint = 6)
+
+rotp_physio_t7 <- rotp_physio %>% 
+  select(contains("_t7")) %>% 
+  mutate(participant_id = rotp_physio$participant_id,
+         condition = rotp_physio$condition,
+         timepoint = 7)
+
+rotp_physio_t8 <- rotp_physio %>% 
+  select(contains("_t8")) %>% 
+  mutate(participant_id = rotp_physio$participant_id,
+         condition = rotp_physio$condition,
+         timepoint = 8)
+
+
+# Non-Physio
+
+rotp_non_physio_t5 <- rotp_non_physio %>% 
+  select(contains("_t5")) %>% 
+  mutate(participant_id = rotp_non_physio$participant_id,
+         condition = rotp_non_physio$condition,
+         timepoint = 5)
+
+rotp_non_physio_t6 <- rotp_non_physio %>% 
+  select(contains("_t6")) %>% 
+  mutate(participant_id = rotp_non_physio$participant_id,
+         condition = rotp_non_physio$condition,
+         timepoint = 6)
+
+rotp_non_physio_t7 <- rotp_non_physio %>% 
+  select(contains("_t7")) %>% 
+  mutate(participant_id = rotp_non_physio$participant_id,
+         condition = rotp_non_physio$condition,
+         timepoint = 7)
+
+rotp_non_physio_t8 <- rotp_non_physio %>% 
+  select(contains("_t8")) %>% 
+  mutate(participant_id = rotp_non_physio$participant_id,
+         condition = rotp_non_physio$condition,
+         timepoint = 8)
+
+
+```
+
+## Rename variables
+
+```{r}
+
+# Physio
+
+colnames(rotp_physio_t5) <-  gsub("_t5_physio", "", colnames(rotp_physio_t5))
+
+colnames(rotp_physio_t6) <-  gsub("_t6_physio",  "", colnames(rotp_physio_t6))
+
+colnames(rotp_physio_t7) <-  gsub("_t7_physio",  "", colnames(rotp_physio_t7))
+
+colnames(rotp_physio_t8) <-  gsub("_t8_physio",  "", colnames(rotp_physio_t8))
+
+# Non-Physio
+
+colnames(rotp_non_physio_t5) <-  gsub("_t5_non_physio", "", colnames(rotp_non_physio_t5))
+
+colnames(rotp_non_physio_t6) <-  gsub("_t6_non_physio",  "", colnames(rotp_non_physio_t6))
+
+colnames(rotp_non_physio_t7) <-  gsub("_t7_non_physio",  "", colnames(rotp_non_physio_t7))
+
+colnames(rotp_non_physio_t8) <-  gsub("_t8_non_physio",  "", colnames(rotp_non_physio_t8))
+
+```
+
+# Merge timepoints back together for physio and non-physio
+
+```{r}
+
+# Physio
+
+rotp_physio_long <- bind_rows(rotp_physio_t5, rotp_physio_t6, rotp_physio_t7, rotp_physio_t8) %>% 
+  mutate(branch = "physio",
+         timepoint = as.factor(timepoint),
+         cov_months_1 = as.factor(cov_months_1),
+         cov_months_2 = as.factor(cov_months_2),
+         cov_months_3 = as.factor(cov_months_3)) %>% 
+  relocate(participant_id, .before = duration) %>% 
+  relocate(timepoint, .after = participant_id) %>% 
+  relocate(branch, .after = timepoint) %>% 
+  relocate(condition, .after = branch) %>% 
+  arrange(participant_id, timepoint)
+
+# Non-Physio
+
+rotp_non_physio_long <- bind_rows(rotp_non_physio_t5, rotp_non_physio_t6, rotp_non_physio_t7, rotp_non_physio_t8) %>% 
+  mutate(branch = "non physio",
+         timepoint = as.factor(timepoint),
+         cov_months_1 = as.factor(cov_months_1),
+         cov_months_2 = as.factor(cov_months_2),
+         cov_months_3 = as.factor(cov_months_3)) %>% 
+  relocate(participant_id, .before = duration) %>% 
+  relocate(timepoint, .after = participant_id) %>% 
+  relocate(branch, .after = timepoint) %>% 
+   relocate(condition, .after = branch) %>% 
+  arrange(participant_id, timepoint)
+
+```
+
+# Merge physio and non-physio into a single long dataframe
+
+```{r}
+
+rotp_behavioral_long <- bind_rows(rotp_physio_long, rotp_non_physio_long)
+
+```
+
+## Make separate dataframe for physio analyses
+
+```{r}
+
+# Change behavioral df timepoints
+
+rotp_behavioral_ajd_t5 <- rotp_behavioral_long %>% 
+  filter(timepoint == 5) %>% 
+  mutate(timepoint = 1) 
+
+rotp_behavioral_ajd_t6 <- rotp_behavioral_long %>% 
+  filter(timepoint == 6) %>% 
+    mutate(timepoint = 1.5)
+
+rotp_behavioral_ajd_t7 <- rotp_behavioral_long %>% 
+  filter(timepoint == 7)  %>% 
+    mutate(timepoint = 2)
+
+rotp_behavioral_ajd_t8 <- rotp_behavioral_long %>% 
+  filter(timepoint == 8) %>% 
+    mutate(timepoint = 3)
+
+rotp_behavioral_adj_123 <- bind_rows(rotp_behavioral_ajd_t5, rotp_behavioral_ajd_t7, rotp_behavioral_ajd_t8)
+
+rotp_behavioral_adj <- bind_rows(rotp_behavioral_ajd_t5,rotp_behavioral_ajd_t6, rotp_behavioral_ajd_t7, rotp_behavioral_ajd_t8)
+
+# Merge with biomarkers
+
+rotp_behavioral_adj <- rotp_behavioral_adj %>% 
+  mutate(timepoint = as.numeric(timepoint),
+         participant_id = as.numeric(participant_id) + 500)
+
+rotp_behavioral_physio_adj <- left_join(rotp_behavioral_adj, biomarkers, by = c("participant_id", "timepoint"))
+
+
+write.csv(rotp_behavioral_physio_adj, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Deidentified Data/Behavioral_Physio_Long_Conditions.csv")
+```
+
+
+# Primary Analyses
+
+## Examine correlations between CO mindset and outcome variables
+
+```{r  setup, warning=FALSE}
+
+# T5
+
+rotp_behavioral_long_t5 <- rotp_behavioral_long %>% 
+  filter(timepoint == 5)
+
+ggpairs(rotp_behavioral_long_t5, 157:170, progress = FALSE)
+
+# T6
+
+rotp_behavioral_long_t6 <- rotp_behavioral_long %>% 
+  filter(timepoint == 6)
+
+ggpairs(rotp_behavioral_long_t6, 157:170, progress = FALSE) 
+
+# T7
+
+rotp_behavioral_long_t7 <- rotp_behavioral_long %>% 
+  filter(timepoint == 7)
+
+ggpairs(rotp_behavioral_long_t7, 157:170, progress = FALSE)
+
+# T8
+
+rotp_behavioral_long_t8 <- rotp_behavioral_long %>% 
+  filter(timepoint == 8)
+
+rotp_behavioral_long %>% 
+  ggpairs(157:170, progress = FALSE)
+
+ggpairs(rotp_behavioral_long_t8, 157:170, progress = FALSE)
+
+
+```
+
+## Examine correlations between CO mindset, PTG, depression, and biomarkers
+
+```{r warning=FALSE}
+
+# T5
+
+rotp_behavioral_physio_adj_t1 <- rotp_behavioral_physio_adj %>% 
+  filter(timepoint == 1) %>% 
+  filter(branch == "physio") %>% 
+  select(c(participant_id, timepoint, co_mindset, ptgi_full, phq_depression, IL6._Log2Transformed, IL10_Log2Transformed, IL1B_Log2Transformed, TNFA_Log2Transformed, CRP_Log2Transformed)) 
+
+
+ggpairs(rotp_behavioral_physio_adj_t1, 3:10, progress = FALSE)
+
+# T7
+
+rotp_behavioral_physio_adj_t2 <- rotp_behavioral_physio_adj %>% 
+  filter(timepoint == 2) %>% 
+  filter(branch == "physio") %>% 
+  select(c(participant_id, timepoint, co_mindset, ptgi_full, phq_depression, IL6._Log2Transformed, IL10_Log2Transformed, IL1B_Log2Transformed, TNFA_Log2Transformed, CRP_Log2Transformed)) 
+
+
+ggpairs(rotp_behavioral_physio_adj_t2, 3:10, progress = FALSE)
+
+# T8
+
+rotp_behavioral_physio_adj_t3 <- rotp_behavioral_physio_adj %>% 
+  filter(timepoint == 3) %>% 
+  filter(branch == "physio") %>% 
+  select(c(participant_id, timepoint, co_mindset, ptgi_full, phq_depression, IL6._Log2Transformed, IL10_Log2Transformed, IL1B_Log2Transformed, TNFA_Log2Transformed, CRP_Log2Transformed)) 
+
+
+ggpairs(rotp_behavioral_physio_adj_t3, 3:10, progress = FALSE)
+
+
+```
+
+
+## CO Mindset - Mixed Model
+
+```{r}
+
+com.mm <- lmer(co_mindset ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long)
+
+summ(com.mm)
+
+sjPlot::tab_model(com.mm)
+
+
+# Plot model
+
+plot_model(com.mm)
+
+ggplot(rotp_behavioral_adj_123, aes(x = as.numeric(timepoint), y = co_mindset, color = condition)) +
+geom_point(alpha = 0.5, size = 1, position = position_jitter(width = 0.1)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of Catastrophes Mindset Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("CO Mindset (Mean)", limits = 1:7, labels = 1:7) +
+theme_minimal()
+
+View(rotp_behavioral_adj)
+
+# Addtional plot models
+
+ggplot(rotp_behavioral_adj_123, aes(x = timepoint, y = co_mindset, group = condition, color = condition)) +
+geom_point() +
+stat_summary(fun = median, geom = "line", size = 1.5) +
+labs(title = "Catastrophes Mindset Across Time") +
+scale_x_discrete("Timepoint", limits = 1:4, labels = 1:4) +
+scale_y_discrete("CO Mindset", limits = 1:7, labels = 1:7) +
+theme_minimal()
+
+
+
+
+
+ggplot(rotp_behavioral_long, aes(x = as.numeric(timepoint), y = co_mindset, color = condition)) +
+  geom_point() + 
+  geom_smooth(method = "lm")
+
+```
+
+## PTG Full - Mixed Model
+
+```{r}
+
+rotp_behavioral_long_t5_t7_t8 <- rotp_behavioral_long %>% 
+  filter(timepoint != 6)
+
+
+ptg_full.mm <- lmer(ptgi_full ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long)
+
+summ(ptg_full.mm)
+
+sjPlot::tab_model(ptg_full.mm)
+
+
+# Plot model
+
+plot_model(ptg_full.mm)
+
+ggplot(rotp_behavioral_adj_123, aes(x = as.numeric(timepoint), y = ptgi_full, color = condition)) +
+geom_point(alpha = 0.5, size = 1, position = position_jitter(width = 0.1)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of PTG Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("PTGI-Full (Mean)", limits = 0:5, labels = 0:5) +
+theme_minimal()
+
+
+
+# Additional plots
+
+ggplot(rotp_behavioral_adj, aes(x = timepoint, y = ptgi_full, group = condition, color = condition)) +
+geom_point() +
+stat_summary(fun = median, geom = "line", size = 1.5) +
+labs(title = "Post-Traumatic Growth Across Time") +
+scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("PTGI-Full", limits = 0:5, labels = 0:5) +
+theme_minimal()
+
+
+
+
+```
+
+
+## PTG Abridged - Mixed Model
+
+```{r}
+
+ptg_abridged.mm <- lmer(ptgi_abridged ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long)
+
+summ(ptg_abridged.mm)
+
+sjPlot::tab_model(ptg_abridged.mm)
+
+
+# Plot model
+
+plot_model(ptg_abridged.mm)
+
+ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_abridged, color = condition)) + 
+  geom_smooth(method = "lm")
+
+```
+
+PTGI Relationships Subscale - Mixed Model
+
+```{r}
+
+ptg_relationships.mm <- lmer(ptgi_relationships ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long)
+
+summ(ptg_relationships.mm)
+
+sjPlot::tab_model(ptg_relationships.mm)
+
+
+# Plot model
+
+plot_model(ptg_relationships.mm)
+
+ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_relationships, color = condition)) +
+  geom_boxplot() + 
+  theme_bw()
+
+
+```
+
+PTGI Possibilities Subscale - Mixed Models
+
+```{r}
+
+ptg_possibilities.mm <- lmer(ptgi_possibilities ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long)
+
+summ(ptg_possibilities.mm)
+
+sjPlot::tab_model(ptg_possibilities.mm)
+
+
+# Plot model
+
+plot_model(ptg_possibilities.mm)
+
+ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_possibilities, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+```
+
+PTGI Strength Subscale - Mixed Models
+
+```{r}
+
+ptg_strength.mm <- lmer(ptgi_strength ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long)
+
+summ(ptg_strength.mm)
+
+sjPlot::tab_model(ptg_strength.mm)
+
+ggplot(rotp_behavioral_adj_123, aes(x = as.numeric(timepoint), y = ptgi_strength, color = condition)) +
+geom_point(alpha = 0.5, size = 1, position = position_jitter(width = 0.2)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of Depression Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("PTGI - Strength", limits = 0:5, labels = 0:5) +
+theme_minimal()
+
+
+
+# Plot model
+
+
+
+plot_model(ptg_strength.mm)
+
+ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_strength, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+
+```
+
+PTGI Appreciation - Mixed Model
+
+```{r}
+
+ptg_appreciation.mm <- lmer(ptgi_appreciation ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long)
+
+summ(ptg_appreciation.mm)
+
+sjPlot::tab_model(ptg_appreciation.mm)
+
+
+# Plot model
+
+plot_model(ptg_appreciation.mm)
+
+ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_appreciation, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+
+```
+
+## PTGI Spiritual - Mixed Model
+
+```{r}
+
+ptg_spiritual.mm <- lmer(ptgi_spiritual ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long)
+
+summ(ptg_spiritual.mm)
+
+sjPlot::tab_model(ptg_spiritual.mm)
+
+
+# Plot model
+
+plot_model(ptg_spiritual.mm)
+
+ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_spiritual, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+
+```
+
+# Positive Affect - Mixed Model
+
+```{r}
+
+pos_affect.mm <- lmer(pos_affect ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8)
+
+summ(pos_affect.mm)
+
+sjPlot::tab_model(pos_affect.mm)
+
+
+# Plot model
+
+plot_model(pos_affect.mm)
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = pos_affect, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+```
+
+# Negative Affect - Mixed Model
+
+```{r}
+
+neg_affect.mm <- lmer(neg_affect ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8)
+
+summ(neg_affect.mm)
+
+sjPlot::tab_model(neg_affect.mm)
+
+
+# Plot model
+
+plot_model(neg_affect.mm)
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = neg_affect, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+```
+
+## PHQ Full - Mixed Model
+
+```{r}
+
+
+phq_full.mm <- lmer(phq_full ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8)
+
+summ(phq_full.mm)
+
+sjPlot::tab_model(phq_full.mm)
+
+
+# Plot model
+
+plot_model(phq_full.mm)
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = phq_full, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+```
+
+## PHQ Anxiety - Mixed Model
+
+```{r}
+
+
+phq_anxiety.mm <- lmer(phq_anxiety ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8)
+
+summ(phq_anxiety.mm)
+
+sjPlot::tab_model(phq_anxiety.mm)
+
+
+# Plot model
+
+plot_model(phq_anxiety.mm)
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = phq_anxiety, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+```
+
+## PHQ Depression - Mixed Model
+
+```{r}
+
+
+phq_depression.mm <- lmer(phq_depression ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8)
+
+summ(phq_depression.mm)
+
+sjPlot::tab_model(phq_depression.mm)
+
+
+# Plot model
+
+plot_model(phq_depression.mm)
+
+ggplot(rotp_behavioral_adj_123, aes(x = as.numeric(timepoint), y = phq_depression, color = condition)) +
+geom_point(alpha = 0.3, size = 1, position = position_jitter(width = 0.1, height = 0.2)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of Depression Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("PHQ-Depression", limits = 0:6, labels = 0:6) +
+theme_minimal()
+
+  
+
+# Additional Plots
+
+# Create a scatterplot with lines connecting medians
+ggplot(rotp_behavioral_adj, aes(x = timepoint, y = phq_depression, group = condition, color = condition)) +
+geom_point() +
+stat_summary(fun = mean, geom = "line", size = 1.5) +
+labs(title = "Depression Across Time") +
+scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("PHQ-Depression", limits = 0:6, labels = 0:6) +
+theme_minimal()
+
+
+
+
+
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = phq_depression, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+
+
+```
+
+## Meaning Presence - Mixed Model
+
+```{r}
+
+
+meaning_presence.mm <- lmer(meaning_presence ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8)
+
+summ(meaning_presence.mm)
+
+sjPlot::tab_model(meaning_presence.mm)
+
+# Plot model
+
+plot_model(meaning_presence.mm)
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = meaning_presence, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+```
+
+## Meaning Search - Mixed Model
+
+```{r}
+
+
+meaning_search.mm <- lmer(meaning_search ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8)
+
+summ(meaning_search.mm)
+
+sjPlot::tab_model(meaning_search.mm)
+
+# Plot model
+
+plot_model(meaning_search.mm)
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = meaning_search, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+```
+
+## Resilience - Mixed Model
+
+## Meaning Search - Mixed Model
+
+```{r}
+
+
+resilience.mm <- lmer(resilience ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8)
+
+summ(resilience.mm)
+
+sjPlot::tab_model(resilience.mm)
+
+# Plot model
+
+plot_model(resilience.mm)
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = resilience, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+```
+
+## Closeness
+
+```{r}
+
+closeness.mm <- (lmer(closeness ~ condition * timepoint + (1 | participant_id), 
+                   data = rotp_behavioral_long_t5_t7_t8))
+
+summ(closeness.mm)
+
+sjPlot::tab_model(closeness.mm)
+
+# Plot model
+
+plot_model(closeness.mm)
+
+ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = closeness, color = condition)) +
+  geom_boxplot() +
+  theme_bw()
+
+
+```
+
+
+```{r}
+
+rotp_summaries_long <- rotp_behavioral_long %>% 
+  select(c(participant_id, timepoint, condition, branch, ptgi_full:closeness))
+
+
+write_sav(rotp_summaries_long, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Deidentified Data/ROTP_Summaries.sav")
+```
+
+
+Merge data long with physio
+
+```{r}
+
+physio_for_merge <- rotp_merged %>% 
+  select(participant_id, )
+
+```
+
+# CRP/Depression Mediation
+
+```{r}
+
+library(lavaan)
+
+# Create new dataset
+
+
+crp_dep_med_model_df <- rotp_behavioral_physio_adj %>% 
+  filter(timepoint == 3, branch == "physio") %>% 
+  select(participant_id, timepoint, condition, phq_depression, CRP_Log2Transformed)
+
+crp_dep_med_model <- '
+             # mediator
+             CRP_Log2Transformed ~ a*condition
+             phq_depression ~ b*CRP_Log2Transformed
+           
+             # direct effect
+             phq_depression ~  c*condition
+
+           # indirect effect (a*b)
+             ab := a*b
+
+           # total effect
+             total := c + (a*b)
+             '
+         
+crp_dep_med <- sem(crp_dep_med_model, data = crp_dep_med_model_df, meanstructure = TRUE,
+           se = "boot", bootstrap = 500)
+
+summary(crp_dep_med, fit.measures=T, standardized=T, ci=TRUE)
+
+```
+
+# IL10/Depression Mediation
+
+```{r}
+
+library(lavaan)
+
+# Create new dataset
+
+
+IL10_dep_med_model_df <- rotp_behavioral_physio_adj %>% 
+  filter(timepoint == 3, branch == "physio") %>% 
+  select(participant_id, timepoint, condition, phq_depression, IL10_Log2Transformed)
+
+IL10_dep_med_model <- '
+             # mediator
+             IL10_Log2Transformed ~ a*condition
+             phq_depression ~ b*IL10_Log2Transformed
+           
+             # direct effect
+             phq_depression ~  c*condition
+
+           # indirect effect (a*b)
+             ab := a*b
+
+           # total effect
+             total := c + (a*b)
+             '
+         
+IL10_dep_med <- sem(IL10_dep_med_model, data = IL10_dep_med_model_df, meanstructure = TRUE,
+           se = "boot", bootstrap = 500)
+
+summary(IL10_dep_med, fit.measures=T, standardized=T, ci=TRUE)
+
+
+
+
+```
+
+# IL10/Depression Mediation (Change scores)
+
+
+```{r}
+
+library(lavaan)
+
+# Create new dataset
+
+
+IL10_dep_med_model_df <- rotp_behavioral_physio_adj %>% 
+  filter((timepoint == 3 | timepoint == 1), branch == "physio") %>% 
+  select(participant_id, timepoint, condition, phq_depression, IL10_Log2Transformed)
+
+IL10_t1 <- IL10_dep_med_model_df %>% 
+  filter(timepoint == 1)
+
+IL10_t3 <- IL10_dep_med_model_df %>% 
+  filter(timepoint == 3)
+
+IL10_1_3 <- inner_join(IL10_t1, IL10_t3, by = "participant_id", suffix = c("_t1", "_t3")) %>% 
+  mutate(depression_change = phq_depression_t3 - phq_depression_t1,
+         IL10_change = IL10_Log2Transformed_t3 - IL10_Log2Transformed_t1)
+
+
+
+
+IL10_1_3_model <- '
+             # mediator
+             IL10_change ~ a*condition_t3
+             depression_change ~ b*IL10_change
+           
+             # direct effect
+             depression_change ~  c*condition_t3
+
+           # indirect effect (a*b)
+             ab := a*b
+
+           # total effect
+             total := c + (a*b)
+             '
+         
+IL10_1_3_model_med <- sem(IL10_1_3_model, data = IL10_1_3, meanstructure = TRUE,
+           se = "boot", bootstrap = 500)
+
+summary(IL10_1_3_model_med, fit.measures=T, standardized=T, ci=TRUE)
+
+install.packages("semPlot")
+
+library(semPlot)
+
+semPaths(IL10_1_3_model_med, whatLabels = "std", style = "lisrel", layout = "tree",
+         rotation = 2)
+
+
+```
+
+Experimenting with multiple imputation
+
+```{r}
+
+rotp_imputation <- rotp_summaries_long
+
+imputed <- mice(rotp_imputation, maxit=0)
+
+predictor_matrix <- imputed$predictorMatrix
+
+meth <- imputed$method
+
+imp2 <- mice(rotp_imputation, maxit = 5, 
+             predictorMatrix = predictor_matrix, 
+             method = meth, print =  FALSE)
+
+fitimp <- with(imp2, lmer(closeness ~ condition * timepoint + (1 | participant_id)))
+
+summary(pool(fitimp))
+
+
+fitimp <- with(imp2, lmer(co_mindset ~ condition * timepoint + (1 | participant_id)))
+
+summary(pool(fitimp))
+
+
+fitimp <- with(imp2, lmer(ptgi_full ~ condition * timepoint + (1 | participant_id)))
+
+summary(pool(fitimp))
+
+
+fitimp <- with(imp2, lmer(pos_affect ~ condition * timepoint + (1 | participant_id)))
+
+summary(pool(fitimp))
+
+
+fitimp <- with(imp2, lmer(neg_affect ~ condition * timepoint + (1 | participant_id)))
+
+summary(pool(fitimp))
+
+
+fitimp <- with(imp2, lmer(meaning_presence ~ condition * timepoint + (1 | participant_id)))
+
+summary(pool(fitimp))
+
+
+fitimp <- with(imp2, lmer(resilience ~ condition * timepoint + (1 | participant_id)))
+
+summary(pool(fitimp))
+
+
+
+fitimp <- with(imp2, lmer(closeness ~ condition * timepoint + (1 | participant_id)))
+
+summary(pool(fitimp))
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,853 @@
+---
+title: "ROTP Physio Summary Scores"
+output: html_document
+date: "2023-03-04"
+author: "Jesse Barrera"
+---
+
+# Load packages
+
+```{r}
+
+library (readr)
+library(dplyr)
+library(psych)
+library(lubridate)
+library(mice)
+
+```
+
+# Import data
+
+```{r}
+
+# Set working directory
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data")
+
+# Import preprocessed data
+
+t1_df <- read.csv("T1 Preprocessed.csv")
+
+t2_df <- read.csv("T2 Preprocessed.csv")
+
+t3_df <- read.csv("T3 Preprocessed.csv")
+
+t4_df <- read.csv("T4 Preprocessed.csv")
+
+```
+
+# Convert data to proper type (int, factor, etc)
+
+```{r}
+
+t1_df[ ,"prh_routine_t1", "prh_income_t1", "prh_food_t1", "prh_housing_t1", 
+       "prh_medical_t1", "prh_mental_t1", "prh_support_t1", "prh_stress_t1", 
+       "prh_discord_t1", "prh_care_t1", "prh_self_cov_t1", "prh_fam_cov_sym_t1",
+       "prh_ext_cov_sym_t1", ]
+
+```
+
+# PTGI full
+
+## Reverse score and rescale items 
+
+```{r rescale items}
+# Rescale from 1-6 to 0-5 
+
+t1_df[ , ptg_t1_1:ptg_t1_21] <- t1_df[ , ptg_t1_1:ptg_t1_21] - 1
+  
+# There are no reverse scored items in the PTGI 
+```
+
+## Calculate summary scores and alphas
+
+```{r calculate full summary scores}
+#T1 full 
+
+t1_summaries <- t1_summaries %>% 
+  mutate(ptg_full_t1 = (ptg_t1_1 + ptg_t1_2 + ptg_t1_3 + ptg_t1_4 + ptg_t1_5
+                    + ptg_t1_6 + ptg_t1_7 + ptg_t1_8 + ptg_t1_9 + 
+                     ptg_t1_10 + ptg_t1_11 + ptg_t1_12 + ptg_t1_13
+                    + ptg_t1_14 + ptg_t1_15 + ptg_t1_16 + ptg_t1_17 + ptg_t1_18
+                    + ptg_t1_19 + ptg_t1_20 + ptg_t1_21)/21)
+
+
+ptg_full_t1_df <- t1_df %>% 
+  select(ptg_t1_1, ptg_t1_2, ptg_t1_3, ptg_t1_4, ptg_t1_5, 
+                     ptg_t1_6, ptg_t1_7, ptg_t1_8, ptg_t1_9,  
+                      ptg_t1_10, ptg_t1_11, ptg_t1_12 , ptg_t1_13,
+                      ptg_t1_14, ptg_t1_15, ptg_t1_16, ptg_t1_17, ptg_t1_18,
+                      ptg_t1_19, ptg_t1_20, ptg_t1_21)
+
+psych::alpha(ptg_full_t1_df)
+
+#T3 full 
+t3_summaries <- t3_summaries %>% 
+  mutate(ptg_full_t3 = (ptg_t3_1 + ptg_t3_2 + ptg_t3_3 + ptg_t3_4 + ptg_t3_5
+                    + ptg_t3_6 + ptg_t3_7 + ptg_t3_8 + ptg_t3_9 + 
+                     ptg_t3_10 + ptg_t3_11 + ptg_t3_12 + ptg_t3_13
+                    + ptg_t3_14 + ptg_t3_15 + ptg_t3_16 + ptg_t3_17 + ptg_t3_18
+                    + ptg_t3_19 + ptg_t3_20 + ptg_t3_21)/21)
+
+
+ptg_full_t3_df <- t3_df %>% 
+  select(ptg_t3_1, ptg_t3_2, ptg_t3_3, ptg_t3_4, ptg_t3_5, 
+                     ptg_t3_6, ptg_t3_7, ptg_t3_8, ptg_t3_9,  
+                      ptg_t3_10, ptg_t3_11, ptg_t3_12 , ptg_t3_13,
+                      ptg_t3_14, ptg_t3_15, ptg_t3_16, ptg_t3_17, ptg_t3_18,
+                      ptg_t3_19, ptg_t3_20, ptg_t3_21)
+
+psych::alpha(ptg_full_t3_df)
+
+#T4 full 
+t4_summaries <- t4_summaries %>% 
+  mutate(ptg_full_t4 = (ptg_t4_1 + ptg_t4_2 + ptg_t4_3 + ptg_t4_4 + ptg_t4_5
+                    + ptg_t4_6 + ptg_t4_7 + ptg_t4_8 + ptg_t4_9 + 
+                     ptg_t4_10 + ptg_t4_11 + ptg_t4_12 + ptg_t4_13
+                    + ptg_t4_14 + ptg_t4_15 + ptg_t4_16 + ptg_t4_17 + ptg_t4_18
+                    + ptg_t4_19 + ptg_t4_20 + ptg_t4_21)/21)
+
+
+ptg_full_t4_df <- t4_df %>% 
+  select(ptg_t4_1, ptg_t4_2, ptg_t4_3, ptg_t4_4, ptg_t4_5, 
+                     ptg_t4_6, ptg_t4_7, ptg_t4_8, ptg_t4_9,  
+                      ptg_t4_10, ptg_t4_11, ptg_t4_12 , ptg_t4_13,
+                      ptg_t4_14, ptg_t4_15, ptg_t4_16, ptg_t4_17, ptg_t4_18,
+                      ptg_t4_19, ptg_t4_20, ptg_t4_21)
+
+psych::alpha(ptg_full_t4_df)
+```
+
+# PTGI abridged 
+
+## Calculate summary scores and alphas
+
+```{r calculate abridged summary scores}
+#T1 abridged 
+
+t1_summaries <- t1_summaries %>% 
+  mutate(ptg_abridged_t1 = (ptg_t1_1 + ptg_t1_2 + ptg_t1_3 + ptg_t1_4
+                    + ptg_t1_6 + ptg_t1_7 + ptg_t1_8 + ptg_t1_9 + 
+                     ptg_t1_10 + ptg_t1_11 + ptg_t1_12 + ptg_t1_13
+                    + ptg_t1_14 + ptg_t1_15 + ptg_t1_16 + ptg_t1_17 + ptg_t1_18
+                   + ptg_t1_20 + ptg_t1_21)/19)
+
+
+ptg_abridged_t1_df <- t1_df %>% 
+  select(ptg_t1_1, ptg_t1_2, ptg_t1_3, ptg_t1_4,  
+                     ptg_t1_6, ptg_t1_7, ptg_t1_8, ptg_t1_9,  
+                      ptg_t1_10, ptg_t1_11, ptg_t1_12 , ptg_t1_13,
+                      ptg_t1_14, ptg_t1_15, ptg_t1_16, ptg_t1_17, ptg_t1_18, 
+                      ptg_t1_20, ptg_t1_21)
+
+psych::alpha(ptg_abridged_t1_df)
+
+#T3 abridged 
+t3_summaries <- t3_summaries %>% 
+  mutate(ptg_abridged_t3 = (ptg_t3_1 + ptg_t3_2 + ptg_t3_3 + ptg_t3_4 + 
+                    + ptg_t3_6 + ptg_t3_7 + ptg_t3_8 + ptg_t3_9 + 
+                     ptg_t3_10 + ptg_t3_11 + ptg_t3_12 + ptg_t3_13
+                    + ptg_t3_14 + ptg_t3_15 + ptg_t3_16 + ptg_t3_17 + ptg_t3_18
+                    + ptg_t3_20 + ptg_t3_21)/19)
+
+
+ptg_abridged_t3_df <- t3_df %>% 
+  select(ptg_t3_1, ptg_t3_2, ptg_t3_3, ptg_t3_4, 
+                     ptg_t3_6, ptg_t3_7, ptg_t3_8, ptg_t3_9,  
+                      ptg_t3_10, ptg_t3_11, ptg_t3_12 , ptg_t3_13,
+                      ptg_t3_14, ptg_t3_15, ptg_t3_16, ptg_t3_17, ptg_t3_18,
+                      ptg_t3_20, ptg_t3_21)
+
+psych::alpha(ptg_abridged_t3_df)
+
+#T4 abridged 
+
+t4_summaries <- t4_summaries %>% 
+  mutate(ptg_abridged_t4 = (ptg_t4_1 + ptg_t4_2 + ptg_t4_3 + ptg_t4_4
+                    + ptg_t4_6 + ptg_t4_7 + ptg_t4_8 + ptg_t4_9 + 
+                     ptg_t4_10 + ptg_t4_11 + ptg_t4_12 + ptg_t4_13
+                    + ptg_t4_14 + ptg_t4_15 + ptg_t4_16 + ptg_t4_17 + ptg_t4_18
+                    + ptg_t4_20 + ptg_t4_21)/19)
+
+
+ptg_abridged_t4_df <- t4_df %>% 
+  select(ptg_t4_1, ptg_t4_2, ptg_t4_3, ptg_t4_4, 
+                     ptg_t4_6, ptg_t4_7, ptg_t4_8, ptg_t4_9,  
+                      ptg_t4_10, ptg_t4_11, ptg_t4_12 , ptg_t4_13,
+                      ptg_t4_14, ptg_t4_15, ptg_t4_16, ptg_t4_17, ptg_t4_18,
+                      ptg_t4_20, ptg_t4_21)
+
+psych::alpha(ptg_abridged_t4_df)
+```
+
+## PTGI Subscales
+
+### Calculate summary scores for each of the five PTGI subscales
+
+```{r calculate summary scores for ptgi subscales }
+
+## T1
+
+#PTGI Relationships Subscale T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(ptg_relationships_t1 = (ptg_t1_12 + ptg_t1_17 + ptg_t1_9 +  
+                                   ptg_t1_20 + ptg_t1_7 + ptg_t1_15 +
+                                   ptg_t1_6)/7)
+
+ptg_relationships_t1_df <- t1_summaries %>% 
+  select(ptg_t1_12, ptg_t1_17, ptg_t1_9, ptg_t1_20,  
+           ptg_t1_7, ptg_t1_15, ptg_t1_6)
+
+#PTGI Possibilities Subscale T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(ptg_possibilities_t1 = (ptg_t1_18 + ptg_t1_21 + ptg_t1_13 + ptg_t1_2 + 
+                                   ptg_t1_14)/5)
+
+ptg_possibilities_t1_df <- t1_summaries %>% 
+  select(ptg_t1_18, ptg_t1_21, ptg_t1_13, ptg_t1_2,  
+                                   ptg_t1_14)
+
+#PTGI Strength Subscale T1
+
+t1_summaries <- t1_summaries %>%
+  mutate(ptg_strength_t1 = (ptg_t1_4 + ptg_t1_8 + ptg_t1_10 + ptg_t1_16)/4)
+
+ptg_strength_t1 <- t1_summaries %>% 
+  select(ptg_t1_4, ptg_t1_8, ptg_t1_10, ptg_t1_16)
+
+#PTGI Spiritual Subscale T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(ptg_spiritual_t1 = (ptg_t1_5 + ptg_t1_19)/2)
+
+ptg_spiritual_t1_df <- t1_summaries %>% 
+  select(ptg_t1_5, ptg_t1_19)
+
+#PTGI Appreciation Subscale T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(ptg_appreciation_t1 = (ptg_t1_1 + ptg_t1_3 + ptg_t1_11)/3)
+
+ptg_appreciation_t1_df <- t1_summaries %>% 
+  select(ptg_t1_1, ptg_t1_3, ptg_t1_11)
+
+
+## T3
+
+#PTGI Relationships Subscale T3
+
+t3_summaries <- t3_summaries %>% 
+  mutate(ptg_relationships_t3 = (ptg_t3_12 + ptg_t3_17 + ptg_t3_9 +  
+                                   ptg_t3_20 + ptg_t3_7 + ptg_t3_15 +
+                                   ptg_t3_6)/7)
+
+ptg_relationships_t3_df <- t3_summaries %>% 
+  select(ptg_t3_12, ptg_t3_17, ptg_t3_9, ptg_t3_20,  
+           ptg_t3_7, ptg_t3_15, ptg_t3_6)
+
+#PTGI Possibilities Subscale T3
+
+t3_summaries <- t3_summaries %>% 
+  mutate(ptg_possibilities_t3 = (ptg_t3_18 + ptg_t3_21 + ptg_t3_13 + ptg_t3_2 + 
+                                   ptg_t3_14)/5)
+
+ptg_possibilities_t3_df <- t3_summaries %>% 
+  select(ptg_t3_18, ptg_t3_21, ptg_t3_13, ptg_t3_2,  
+                                   ptg_t3_14)
+
+#PTGI Strength Subscale T3
+
+t3_summaries <- t3_summaries %>% 
+  mutate(ptg_strength_t3 = (ptg_t3_4 + ptg_t3_8 + ptg_t3_10 + ptg_t3_16)/4)
+
+ptg_strength_t3_df <- t3_summaries %>% 
+  select(ptg_t3_4, ptg_t3_8, ptg_t3_10, ptg_t3_16)
+
+#PTGI Spiritual Subscale T3
+
+t3_summaries <- t3_summaries %>% 
+  mutate(ptg_spiritual_t3 = (ptg_t3_5 + ptg_t3_19)/2)
+
+ptg_spiritual_t3_df <- t3_summaries %>% 
+  select(ptg_t3_5, ptg_t3_19)
+
+#PTGI Appreciation Subscale T3
+
+t3_summaries <- t3_summaries %>% 
+  mutate(ptg_appreciation_t3 = (ptg_t3_1 + ptg_t3_3 + ptg_t3_11)/3)
+
+ptg_appreciation_t3_df <- t3_summaries %>% 
+  select(ptg_t3_1, ptg_t3_3, ptg_t3_11)
+
+## T4
+
+#PTGI Relationships Subscale T4
+
+t4_summaries <- t4_summaries %>% 
+  mutate(ptg_relationships_t4 = (ptg_t4_12 + ptg_t4_17 + ptg_t4_9 +  
+                                   ptg_t4_20 + ptg_t4_7 + ptg_t4_15 +
+                                   ptg_t4_6)/7)
+
+ptg_relationships_t4_df <- t4_summaries %>% 
+  select(ptg_t4_12, ptg_t4_17, ptg_t4_9, ptg_t4_20,  
+           ptg_t4_7, ptg_t4_15, ptg_t4_6)
+
+#PTGI Possibilities Subscale T4
+
+t4_summaries <- t4_summaries %>% 
+  mutate(ptg_possibilities_t4 = (ptg_t4_18 + ptg_t4_21 + ptg_t4_13 + ptg_t4_2 + 
+                                   ptg_t4_14)/5)
+
+ptg_possibilities_t4_df <- t4_summaries %>% 
+  select(ptg_t4_18, ptg_t4_21, ptg_t4_13, ptg_t4_2,  
+                                   ptg_t4_14)
+
+#PTGI Strength Subscale T4
+
+t4_summaries <- t4_summaries %>%
+  mutate(ptg_strength_t4 = (ptg_t4_4 + ptg_t4_8 + ptg_t4_10 + ptg_t4_16)/4)
+
+ptg_strength_t4 <- t4_summaries %>% 
+  select(ptg_t4_4, ptg_t4_8, ptg_t4_10, ptg_t4_16)
+
+#PTGI Spiritual Subscale T4
+
+t4_summaries <- t4_summaries %>% 
+  mutate(ptg_spiritual_t4 = (ptg_t4_5 + ptg_t4_19)/2)
+
+ptg_spiritual_t4_df <- t4_summaries %>% 
+  select(ptg_t4_5, ptg_t4_19)
+
+#PTGI Appreciation Subscale T4
+
+t4_summaries <- t4_summaries %>% 
+  mutate(ptg_appreciation_t4 = (ptg_t4_1 + ptg_t4_3 + ptg_t4_11)/3)
+
+ptg_appreciation_t4_df <- t4_summaries %>% 
+  select(ptg_t4_1, ptg_t4_3, ptg_t4_11)
+
+```
+
+# CO Mindset
+
+## Reverse score items 
+
+## Note: ZH is waiting about RESCALING 
+
+```{r reverse score comindset}
+
+#T1 Reverse Scoring 
+
+co_reverse_columns_t1 <- c("co_mindset_t1_1","co_mindset_t1_3", "co_mindset_t1_4",
+                        "co_mindset_t1_7", "co_mindset_t1_9")
+
+t1_df[ ,co_reverse_columns_t1] <- 8 - t1_df[ ,co_reverse_columns_t1]
+
+#T3 Reverse Scoring 
+
+co_reverse_columns_t3 <- c("co_mindset_intro_t3_1",
+                        "co_mindset_intro_t3_3", "co_mindset_intro_t3_4",
+                        "co_mindset_intro_t3_7","co_mindset_intro_t3_9")
+
+t3_df[ ,co_reverse_columns_t3] <- 8- t3_df[ ,co_reverse_columns_t3]
+
+#T4 Reverse Scoring 
+
+co_reverse_columns_t4 <- c("co_mindset_t4_1", "co_mindset_t4_3",
+                         "co_mindset_t4_4", "co_mindset_t4_7", "co_mindset_t4_9")
+
+
+t4_df[ ,co_reverse_columns_t4] <- 8- t4_df[ ,co_reverse_columns_t4]
+```
+
+## Calculate summary scores and alphas CO Mindset 
+
+```{r calculate summary scores for comindset}
+#T1 
+
+t1_summaries <- t1_summaries %>%
+  mutate(co_mindset_t1 = (co_mindset_t1_1 + co_mindset_t1_2 + co_mindset_t1_3 +
+                            co_mindset_t1_4 + co_mindset_t1_5 + co_mindset_t1_6
+                          + co_mindset_t1_7 + co_mindset_t1_8 + co_mindset_t1_9 +
+                            co_mindset_t1_10)/10)
+
+co_mindset_t1_df <- coi_merged_summaries %>% 
+  select(co_mindset_t1_1, co_mindset_t1_2, co_mindset_t1_3,
+                            co_mindset_t1_4, co_mindset_t1_5, co_mindset_t1_6
+                          ,co_mindset_t1_7, co_mindset_t1_8, co_mindset_t1_9,
+                            co_mindset_t1_10)
+
+psych::alpha(co_mindset_t1_df)
+
+#T3 
+
+t3_summaries <- t3_summaries %>% 
+  mutate(co_mindset_t3 = (co_mindset_intro_t3_1 + co_mindset_intro_t3_2 + co_mindset_intro_t3_3 +
+                            co_mindset_intro_t3_4 + co_mindset_intro_t3_5 + co_mindset_intro_t3_6
+                          + co_mindset_intro_t3_7 + co_mindset_intro_t3_8 + co_mindset_intro_t3_9                           + co_mindset_intro_t3_10)/10)
+
+co_mindset_t3_df <- t3_summaries %>% 
+  select(co_mindset_intro_t3_1, co_mindset_intro_t3_2, co_mindset_intro_t3_3,
+                            co_mindset_intro_t3_4, co_mindset_intro_t3_5, co_mindset_intro_t3_6,
+                         co_mindset_intro_t3_7, co_mindset_intro_t3_8, co_mindset_intro_t3_9,                           co_mindset_intro_t3_10)
+
+psych::alpha(co_mindset_t3_df)
+
+
+#T4 
+t4_summaries <- t4_summaries %>% 
+  mutate(co_mindset_t4 = (co_mindset_intro_t4_1 + co_mindset_intro_t4_2 + co_mindset_intro_t4_3 +
+                            co_mindset_intro_t4_4 + co_mindset_intro_t4_5 + co_mindset_intro_t4_6
+                          + co_mindset_intro_t4_7 + co_mindset_intro_t4_8 + co_mindset_intro_t4_9                           + co_mindset_intro_t4_10)/10)
+
+co_mindset_t4_df <- t4_summaries %>% 
+  select(co_mindset_intro_t4_1, co_mindset_intro_t4_2, co_mindset_intro_t4_3,
+                            co_mindset_intro_t4_4, co_mindset_intro_t4_5, co_mindset_intro_t4_6,
+                         co_mindset_intro_t4_7, co_mindset_intro_t4_8, co_mindset_intro_t4_9,                           co_mindset_intro_t4_10)
+
+psych::alpha(co_mindset_t4_df)
+
+```
+
+# Positive Affect 
+
+## Note: No reverse scoring, ZH is waiting about RESCALING 
+
+```{r summary scores positive affect}
+
+#T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(pos_affect_t1 = (panas_t1_1 + panas_t1_3 + panas_t1_5 + panas_t1_9
+                          + panas_t1_10 + panas_t1_12 + panas_t1_14 
+                          + panas_t1_16 + panas_t1_17 + panas_t1_19)/10)
+
+pos_affect_t1_df <- t1_summaries %>% 
+  select(panas_t1_1, panas_t1_3, panas_t1_5, panas_t1_9
+                          , panas_t1_10, panas_t1_12, panas_t1_14 
+                          , panas_t1_16, panas_t1_17, panas_t1_19)
+
+psych::alpha(pos_affect_t1_df)
+
+#T3 
+
+t3_summaries <- t3_summaries %>% 
+  mutate(pos_affect_t3 = (panas_t3_1 + panas_t3_3 + panas_t3_5 + panas_t3_9
+                          + panas_t3_10 + panas_t3_12 + panas_t3_14 
+                          + panas_t3_16 + panas_t3_17 + panas_t3_19)/10)
+
+pos_affect_t3_df <- t3_summaries %>% 
+  select(panas_t3_1, panas_t3_3, panas_t3_5, panas_t3_9
+                          , panas_t3_10, panas_t3_12, panas_t3_14 
+                          , panas_t3_16, panas_t3_17, panas_t3_19)
+
+psych::alpha(pos_affect_t3_df)
+
+#T4 
+
+t4_summaries <- t4_summaries %>% 
+  mutate(pos_affect_t4 = (panas_t4_1 + panas_t4_3 + panas_t4_5 + panas_t4_9
+                          + panas_t4_10 + panas_t4_12 + panas_t4_14 
+                          + panas_t4_16 + panas_t4_17 + panas_t4_19)/10)
+
+pos_affect_t4_df <- t4_summaries %>% 
+  select(panas_t4_1, panas_t4_3, panas_t4_5, panas_t4_9
+                          , panas_t4_10, panas_t4_12, panas_t4_14 
+                          , panas_t4_16, panas_t4_17, panas_t4_19)
+
+psych::alpha(pos_affect_t4_df)
+```
+
+# Negative Affect 
+
+## Note: No reverse scoring, ZH is waiting about RESCALING
+
+```{r summary scores negative affect}
+#T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(neg_affect_t1 = (panas_t1_2 + panas_t1_4 + panas_t1_6 + panas_t1_7
+                          + panas_t1_8 + panas_t1_11 + panas_t1_13 
+                          + panas_t1_15 + panas_t1_18 + panas_t1_20)/10)
+
+neg_affect_t1_df <- t1_summaries %>% 
+  select(panas_t1_2, panas_t1_4, panas_t1_6, panas_t1_7
+                          , panas_t1_8, panas_t1_11, panas_t1_13 
+                          , panas_t1_15, panas_t1_18, panas_t1_20)
+
+psych::alpha(neg_affect_t1_df)
+
+#T3
+
+t3_summaries <- t3_summareis %>% 
+  mutate(neg_affect_t3 = (panas_t3_2 + panas_t3_4 + panas_t3_6 + panas_t3_7
+                          + panas_t3_8 + panas_t3_11 + panas_t3_13 
+                          + panas_t3_15 + panas_t3_18 + panas_t3_20)/10)
+
+neg_affect_t3_df <- t3_summaries %>% 
+  select(panas_t3_2, panas_t3_4, panas_t3_6, panas_t3_7
+                          , panas_t3_8, panas_t3_11, panas_t3_13 
+                          , panas_t3_15, panas_t3_18, panas_t3_20)
+
+psych::alpha(neg_affect_t3_df)
+
+#T4 
+
+t4_summaries <- t4_summaries %>% 
+  mutate(neg_affect_t4 = (panas_t4_2 + panas_t4_4 + panas_t4_6 + panas_t4_7
+                          + panas_t4_8 + panas_t4_11 + panas_t4_13 
+                          + panas_t4_15 + panas_t4_18 + panas_t4_20)/10)
+
+neg_affect_t4_df <- t4_summaries %>% 
+  select(panas_t4_2, panas_t4_4, panas_t4_6, panas_t4_7
+                          , panas_t4_8, panas_t4_11, panas_t4_13 
+                          , panas_t4_15, panas_t4_18, panas_t4_20)
+
+psych::alpha(neg_affect_t4_df)
+```
+
+# PHQ-4 Scale Full 
+
+## Recode PHQ-4 scores from 1-4 to 0-3 scale
+
+```{r recode anxiety and depression scores }
+# T1 Recoding 
+t1_summaries <- t1_summaries %>% 
+  mutate(phq_t1._1 = phq_t1._1 - 1,
+         phq_t1._2 = phq_t1._2 - 1,
+         phq_t1._3 = phq_t1._3 -1, 
+         phq_t1._4 = phq_t1._4 -1,)
+
+#T3 Recoding 
+ t3_summaries <- t3_summaries %>%
+   mutate(phq_t3_1 = phq_t3_1 - 1,
+         phq_t3_2 = phq_t3_2 - 1,
+         phq_t3_3 = phq_t3_3 -1, 
+         phq_t3_4 = phq_t3_4 - 1)
+
+ #T4 Recoding 
+t4_summaries <- t4_summaries %>%
+  mutate(phq_t4_1 = phq_t4_1 - 1, 
+         phq_t4_2 = phq_t4_2 - 1,
+         phq_t4_3 = phq_t4_3 - 1,
+         phq_t4_4 = phq_t4_4 - 1)
+```
+
+## Calculate summary scores and alphas for PHQ-4 Scale Full 
+
+```{r summary scores phq-4 scale full}
+
+#T1 
+
+t1_summaries <- t1_summaries %>% 
+  mutate(phq_t1 = (phq_t1._1 + phq_t1._2 + phq_t1._3 + phq_t1._4))
+
+phq_t1_df <- t1_summaries %>% 
+  select(phq_t1._1, phq_t1._2, phq_t1._3, phq_t1._4)
+
+psych::alpha(phq_t1_df)
+
+#T3
+
+t3_summaries <- t3_summaries %>% 
+  mutate(phq_t3 = (phq_t3_1 + phq_t3_2 + phq_t3_3 + phq_t3_4))
+
+phq_t3_df <- t3_summaries %>% 
+  select(phq_t3_1, phq_t3_2, phq_t3_3, phq_t3_4)
+
+psych::alpha(phq_t3_df)
+
+#T4
+
+t4_summaries <- t4_summaries %>% 
+  mutate(phq_t4 = (phq_t4_1 + phq_t4_2 + phq_t4_3 + phq_t4_4))
+
+phq_t1_df <- t1_summaries %>% 
+  select(phq_t4_1, phq_t4_2, phq_t4_3, phq_t4_4)
+
+psych::alpha(phq_t4_df)
+```
+
+## PHQ-4 Anxiety Subscale 
+
+## Calculate summary scores and alphas for PHQ-Anxiety Subscale 
+```{r summary scores phq-4 anxiety subscale}
+#T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(anxiety_t1 = (phq_t1._1 + phq_t1._2))
+
+anxiety_t1_df <- t1_summaries %>% 
+  select(phq_t1._1, phq_t1._2)
+
+psych::alpha(anxiety_t1_df)
+
+#T3
+
+t3_summaries <- t3_summaries %>% 
+  mutate(anxiety_t3 = (phq_t3_1 + phq_t3_2))
+
+anxiety_t3_df <- t3_summaries %>% 
+  select(phq_t3_1, phq_t3_2)
+
+psych::alpha(anxiety_t3_df)
+
+#T4 
+t4_summaries <- t4_summaries %>% 
+  mutate(anxiety_t4 = (phq_t4_1 + phq_t4_2))
+
+anxiety_t4_df <- t4_summaries %>% 
+  select(phq_t4_1, phq_t4_2)
+
+psych::alpha(anxiety_t4_df)
+
+```
+
+## PHQ-4 Depression Subscale 
+
+## Calculate summary scores and alphas for PHQ-Depression Subscale 
+
+```{r summary scores phq-4 depression subscale}
+
+#T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(depression_t1 = (phq_t1._3 + phq_t1._4))
+
+depression_t1_df <- t1_summaries %>% 
+  select(phq_t1._3, phq_t1._4)
+
+psych::alpha(depression_t1_df)
+
+#T3
+
+t3_summaries <- t3_summaries %>% 
+  mutate(depression_t3 = (phq_t3_3 + phq_t3_4))
+
+depression_t3_df <- t3_summaries %>% 
+  select(phq_t3_3, phq_t3_4)
+
+psych::alpha(depression_t3_df)
+
+#T4 
+t4_summaries <- t4_summaries %>% 
+  mutate(depression_t4 = (phq_t4_3 + phq_t4_4))
+
+depression_t4_df <- t4_summaries %>% 
+  select(phq_t4_3, phq_t4_4)
+
+psych::alpha(depression_t4_df)
+
+```
+
+#Social Well-Being
+
+## Recode SWB scores from 1-6 to 0-5 scale
+
+```{r recode swb scores}
+
+#T1 Recoding 
+
+t1_summaries <- t1_summaries %>% 
+  mutate(social_wellbeing_t1_1 = social_wellbeing_t1_1 - 1,
+         social_wellbeing_t1_2 = social_wellbeing_t1_2 - 1,
+         social_wellbeing_t1_3 = social_wellbeing_t1_3 - 1,
+         social_wellbeing_t1_4 = social_wellbeing_t1_4 - 1,
+         social_wellbeing_t1_5 = social_wellbeing_t1_5 - 1)
+
+#T3 Recoding 
+t3_summaries <- t3_summaries %>%
+  mutate(social_wellbeing_t3_1 = social_wellbeing_t3_1 - 1,
+         social_wellbeing_t3_2 = social_wellbeing_t3_2 - 1,
+         social_wellbeing_t3_3 = social_wellbeing_t3_3 - 1,
+         social_wellbeing_t3_4 = social_wellbeing_t3_4 - 1,
+         social_wellbeing_t3_5 = social_wellbeing_t3_5 - 1)
+
+#T4 Recoding 
+t4_summaries <- t4_summaries %>%
+  mutate(social_wellbeing_t4_1 = social_wellbeing_t4_1 -1,
+         social_wellbeing_t4_2 = social_wellbeing_t4_2 -1, 
+         social_wellbeing_t4_3 = social_wellbeing_t4_3 -1, 
+         social_wellbeing_t4_4 = social_wellbeing_t4_4 -1, 
+         social_wellbeing_t4_5 = social_wellbeing_t4_5 -1)
+```
+
+## Calculate summary scores and alphas for SWB
+
+```{r summary scores swb}
+
+#T1
+
+t1_summaries <- t1_summaries %>% 
+  mutate(swb_t1 = (social_wellbeing_t1_1 + social_wellbeing_t1_2 
+                   + social_wellbeing_t1_3 + social_wellbeing_t1_4
+                   + social_wellbeing_t1_5)/5)
+
+swb_t1_df <- t1_summaries %>% 
+  select(social_wellbeing_t1_1, social_wellbeing_t1_2 
+                   , social_wellbeing_t1_3, social_wellbeing_t1_4
+                   , social_wellbeing_t1_5)
+
+psych::alpha(swb_t1_df)
+
+
+#T3 
+t3_summaries <- t3_summaries %>% 
+  mutate(swb_t3 = (social_wellbeing_t3_1 + social_wellbeing_t3_2 
+                   + social_wellbeing_t3_3 + social_wellbeing_t3_4
+                   + social_wellbeing_t3_5)/5)
+
+swb_t3_df <- t3_summaries %>% 
+  select(social_wellbeing_t3_1, social_wellbeing_t3_2 
+                   , social_wellbeing_t3_3, social_wellbeing_t3_4
+                   , social_wellbeing_t3_5)
+
+psych::alpha(swb_t3_df)
+
+#T4 
+t4_summaries <- t4_summaries %>% 
+  mutate(swb_t4 = (social_wellbeing_t4_1 + social_wellbeing_t4_2 
+                   + social_wellbeing_t4_3 + social_wellbeing_t4_4
+                   + social_wellbeing_t4_5)/5)
+
+swb_t4_df <- t4_summaries %>% 
+  select(social_wellbeing_t4_1, social_wellbeing_t4_2 
+                   , social_wellbeing_t4_3, social_wellbeing_t4_4
+                   , social_wellbeing_t4_5)
+
+psych::alpha(swb_t4_df)
+```
+
+# Global Mental Health / Physical Health / Quality of Life 
+
+## ZH Need Help 
+
+```{r}
+
+```
+
+# Meaning 
+
+## Note: ZH is waiting about RESCALING
+
+## Meaning searching subscale 
+```{r summary scores meaning searching subscale}
+#T1 
+t1_summaries <- t1_summaries %>% 
+  mutate(meaning_searching_t1 = (meaning_base_2 + meaning_base_3 + meaning_base_6)/3)
+
+meaning_searching_t1_df <- t1_summaries %>% 
+  select(meaning_base_2, meaning_base_3, meaning_base_6)
+
+psych::alpha(meaning_searching_t1_df)
+
+#T3 
+t3_summaries <- t3_summaries %>%
+  mutate(meaning_searching_t3 = (meaning_t3_2 + meaning_t3_3 + meaning_t3_6)/3)
+
+meaning_searching_t3_df <- t3_summaries %>%
+  select(meaning_t3_2, meaning_t3_3, meaning_t3_6)
+
+psych::alpha(meaning_searching_t3_df)
+
+#T4
+t4_summaries <- t4_summaries %>%
+  mutate(meaning_searching_t4 = (meaning_t4_2 + meaning_t4_3 + meaning_t4_6)/3)
+
+meaning_searching_t4_df <- t4_summaries %>%
+  select(meaning_t4_2, meaning_t4_3, meaning_t4_6)
+
+psych::alpha(meaning_searching_t4_df)
+```
+
+## Meaning presence subscale 
+```{r summary scores meaning presence subscale}
+#T1 
+t1_summaries <- t1_summaries %>%
+  mutate(meaning_presence_t1 = (meaning_base_1 + meaning_base_4 + meaning_base_5/3))
+
+meaning_presence_t1_df <- t1_summaries %>%
+  select(meaning_base_1, meaning_base_4, meaning_base_5)
+
+psych::alpha(meaning_presence_t1_df)
+
+#T3
+t3_summaries <- t3_summaries %>%
+  mutate(meaning_presence_t3 = (meaning_t3_1 + meaning_t3_4 + meaning_t3_5)/3)
+
+meaning_presence_t3_df <- t3_summaries %>%
+  select(meaning_base_1, meaning_base_4, meaning_base_5)
+
+psych::alpha(meaning_presence_t3_df)
+
+#T4
+t4_summaries <- t4_summaries %>%
+  mutate(meaning_presence_t4 = (meaning_t4_1 + meaning_t4_4 + meaning_t4_5)/3)
+
+meaning_presence_t4_df <- t4_summaries %>%
+  select(meaning_t4_1, meaning_t4_4, meaning_t4_5)
+
+psych::alpha(meaning_presence_t4_df)
+```
+
+## Meaning combined scale 
+### First reverse score meaning searching subscale
+
+```{r reverse score meaning searching subscale}
+#T1 Reverse Scoring  
+
+meaning_searching_reverse_columns_t1 <- c("meaning_base_2", "meaning_base_3", "meaning_base_6")
+
+t1_df[ ,meaning_searching_reverse_columns_t1] <- t1_df[ ,meaning_searching_reverse_columns_t1]
+
+#T3 Reverse Scoring 
+
+meaning_searching_reverse_columns_t3 <- c("meaning_t3_2", "meaning_t3_3", "meaning_t3_6")
+
+t3_df[ ,meaning_searching_reverse_columns_t3] <- t3_df[ ,meaning_searching_reverse_columns_t3]
+
+#T4 Reverse Scoring 
+
+meaning_searching_reverse_columns_t4 <- c("meaning_t4_2", "meaning_t4_3", "meaning_t4_6")
+
+t4_df[ ,meaning_searching_reverse_columns_t4] <- t4_df[ ,meaning_searching_reverse_columns_t4]
+```
+
+## Calculate Meaning Summary Score
+
+```{r summary scores meaning}
+#T1 
+
+t1_summaries <- t1_summaries %>%
+  mutate(meaning_t1 = (meaning_base_1 + meaning_base_2 + meaning_base_3 + meaning_base_4 + meaning_base_5 + meaning_base_6)/6)
+
+meaning_t1_df <- t1_summaries %>%
+  select(meaning_base_1, meaning_base_2, meaning_base_3, meaning_base_4, meaning_base_5, meaning_base_6)
+
+psych::alpha(meaning_t1_df)
+
+#T3 
+
+t3_summaries <- t3_summaries %>%
+  mutate(meaning_t3 = (meaning_t3_1 + meaning_t3_2 + meaning_t3_3 + meaning_t3_4 + meaning_t3_5 + meaning_t3_6)/6)
+
+meaning_t3_df <- t3_summaries %>%
+  select(meaning_t3_1, meaning_t3_2, meaning_t3_3, meaning_t3_4, meaning_t3_5, meaning_t3_6)
+
+psych::alpha(meaning_t3)
+
+#T4 
+
+t4_summaries <- t4_summaries %>%
+  mutate(meaning_t4 = (meaning_t4_1 + meaning_t4_2 + meaning_t4_3 + meaning_t4_4 + meaning_t4_5 + meaning_t4_6)/6)
+
+meaning_t4_df <- t4_summaries %>%
+  select(meaning_t4_1, meaning_t4_2, meaning_t4_3, meaning_t4_4, meaning_t4_5, meaning_t4_6)
+
+psych::alpha(meaning_t4)
+
+```
+

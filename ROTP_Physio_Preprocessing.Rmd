@@ -1,0 +1,1538 @@
+---
+title: "ROTP Merge and Deidentify"
+author: "Jesse Barrera"
+date: "2/22/23"
+output: html_document
+---
+
+# Load packages
+
+```{r}
+
+library (readr)
+library(dplyr)
+library(psych)
+library(lubridate)
+library(mice)
+
+```
+
+# Import raw data
+
+```{r}
+
+# Set working directory
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Physio")
+
+# Import raw physio data
+
+prescreening_raw <- read.csv("ROTP_Physio_Prescreening_Raw.csv", na.strings = c("", " "))
+
+t1_raw <- read.csv("ROTP_Physio_T1_Raw.csv", na.strings = c("", " "))
+
+t2_raw <- read.csv("ROTP_Physio_T2_Raw.csv", na.strings = c("", " "))
+
+t3_raw <- read.csv("ROTP_Physio_T3_Raw.csv", na.strings = c("", " "))
+
+t4_raw <- read.csv("ROTP_Physio_T4_Raw.csv", na.strings = c("", " "))
+
+
+# Import participant ID key and change email column name to match raw datasets
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys")
+
+id_key <- read.csv("ROTP_physio_id_key.csv") 
+
+# Import list of participants who completed T1 blood sample
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses")
+
+t1_sample_completed <- read.csv("T1 Sample Completed.csv")
+
+```
+
+# Remove unecessary Qualtrics metadata
+
+```{r}
+
+# T1
+
+t1_raw <- t1_raw %>% 
+  select(-c(Status, IPAddress, Progress, RecordedDate, ResponseId,
+            DistributionChannel, UserLanguage, ExternalReference))
+
+t1_raw <- t1_raw[-c(1,2), ]
+
+
+# T2
+
+t2_raw <- t2_raw %>% 
+  select(-c(Status, IPAddress, Progress, RecordedDate, ResponseId,
+            DistributionChannel, UserLanguage, ExternalReference, Login.ID))
+
+t2_raw <- t2_raw[-c(1,2), ]
+
+# T3
+
+t3_raw <- t3_raw %>% 
+  select(-c(Status, IPAddress, Progress, RecordedDate, ResponseId,
+            DistributionChannel, UserLanguage, ExternalReference))
+
+t3_raw <- t3_raw[-c(1,2), ]
+
+# T4
+
+t4_raw <- t4_raw %>% 
+  select(-c(Status, IPAddress, Progress, RecordedDate, ResponseId,
+            DistributionChannel, UserLanguage, ExternalReference))
+
+t4_raw <- t4_raw[-c(1,2), ]
+
+```
+
+# Remove test participants
+
+```{r}
+# Remove test participants
+
+# Remove participants who:
+## Started before study was launched or after study closed
+## Do not have an email address attached to their response (this indicates they used Qualtrics preview feature)
+## Have an email address corresponding with a member of the lab
+
+t1_raw <- t1_raw %>% 
+  filter((mdy_hm(StartDate) >= mdy_hm("10/19/22 06:00")) & 
+           (mdy_hm(EndDate) <= mdy_hm("10/24/22 23:59"))) %>% 
+  filter(!is.na(RecipientEmail)) %>% 
+  filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
+                              "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
+                              "barreraj@stanford.edu", "klouis@stanford.edu", 
+                              "lstraube@stanford.edu", "jzielke@stanford.edu",
+                            "jbkaul@stanford.edu", "krise@stanford.edu"
+                            , "kconte@stanford.edu", "megan92@stanford.edu", 
+                              "kpags@stanford.edu")))
+
+t2_raw <- t2_raw %>% 
+  filter((mdy_hm(StartDate) >= mdy_hm("11/10/22 11:36")) & 
+           (mdy_hm(EndDate) <= mdy_hm("11/16/22 23:59"))) %>% 
+    filter(!is.na(RecipientEmail)) %>% 
+     filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
+                              "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
+                              "barreraj@stanford.edu", "klouis@stanford.edu", 
+                              "lstraube@stanford.edu", "jzielke@stanford.edu",
+                            "jbkaul@stanford.edu", "krise@stanford.edu"
+                            , "kconte@stanford.edu", "megan92@stanford.edu", 
+                              "kpags@stanford.edu")))
+
+
+t3_raw <- t3_raw %>% 
+  filter((mdy_hm(StartDate) >= mdy_hm("11/30/22 10:33")) & 
+           (mdy_hm(EndDate) <= mdy_hm("12/04/22 23:59"))) %>% 
+    filter(!is.na(RecipientEmail)) %>% 
+    filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
+                              "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
+                              "barreraj@stanford.edu", "klouis@stanford.edu", 
+                              "lstraube@stanford.edu", "jzielke@stanford.edu",
+                            "jbkaul@stanford.edu", "krise@stanford.edu"
+                            , "kconte@stanford.edu", "megan92@stanford.edu", 
+                              "kpags@stanford.edu")))
+
+
+
+
+t4_raw <- t4_raw %>% 
+  filter((mdy_hm(StartDate) >= mdy_hm("2/8/23 06:00")) & 
+           (mdy_hm(EndDate) <= mdy_hm("2/17/23 23:59"))) %>% 
+    filter(!is.na(RecipientEmail)) %>% 
+    filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
+                              "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
+                              "barreraj@stanford.edu", "klouis@stanford.edu", 
+                              "lstraube@stanford.edu", "jzielke@stanford.edu",
+                            "jbkaul@stanford.edu", "krise@stanford.edu"
+                            , "kconte@stanford.edu", "megan92@stanford.edu", 
+                              "kpags@stanford.edu")))
+
+
+
+```
+
+
+# Remove participants who don't meet inclusion criteria
+
+## Does not meet medical eligibility criteria at prescreening (should already have
+been filtered out but just doublechecking)
+
+```{r}
+
+# Make list of participant emails who meet prescreening criteria
+
+prescreening_eligible <- prescreening_raw %>% 
+  filter(physio_interested == "Yes" &
+           physiology_opt == "Yes" &
+           age == "Yes" &
+           HIV == "No" &
+           heart_attack_stroke == "No" &
+           cancer == "No" &
+          autoimmune == "I don't have any autoimmune conditions" &
+           splenectomy == "No" &
+           acute._infection == "No" &
+           chronic_infection == "No" &
+           meds_general. == "I haven't taken any of these medication and/or treatments." &
+           immunomodulators == "I haven't taken any immunomodulators" &
+           monoclonals == "I haven't had any monoclonal antibody therapies" &
+           IVIG. == "No"
+           ) %>% 
+  select(RecipientEmail)
+
+# Make list of participants who selected "Other (please elaborate)" for autoimmune
+# so we can evaluate whether they are actually eligible, then potentially subtract
+# the ineligible ones from prescreening_eligible
+# REMEMBER TO ACTUALLY EVALUATE THESE!!
+
+autoimmune_questions <- prescreening_raw %>% 
+  filter(physio_interested == "Yes" &
+           physiology_opt == "Yes" &
+           age == "Yes" &
+           HIV == "No" &
+           heart_attack_stroke == "No" &
+           cancer == "No" &
+           autoimmune == "Other (please elaborate)" &
+           splenectomy == "No" &
+           acute._infection == "No" &
+           chronic_infection == "No" &
+           meds_general. == "No" &
+           immunomodulators == "No" &
+           monoclonals == "No" &
+           IVIG. == "No"
+           ) %>% 
+  select(RecipientEmail)
+
+# filter out participants who are in later timepoints but not prescreening_eligible
+# if any participants are filtered out evaluate on case by case basis
+
+t1_raw <- t1_raw %>% 
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+t3_raw <- t3_raw %>% 
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+t4_raw <- t4_raw %>% 
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+```
+
+
+## Does not meet medical eligibility criteria at T3 or T4 (look back into Other - 
+Please Elaborate participants)
+
+```{r}
+
+# filter out participants who do not meet medical eligibility criteria as measured at T3 
+# or T4
+
+# Make a list of participants who do not meet eligiblity criteria at T3/T4
+
+
+t3_ineligible <- t3_raw %>% 
+  filter(age != "1" |
+           HIV != "2" |
+           heart_attack_stroke != "2" |
+           cancer != "2" |
+          autoimmune != "10" |
+           splenectomy != "2" |
+           acute._infection != "2" |
+           chronic_infection != "2" |
+           meds_general != "8" |
+           immunomodulators != "7" |
+           monoclonals != "8" |
+           IVIG != "2"
+           ) %>% 
+  select(RecipientEmail)
+
+t4_ineligible <- t4_raw %>% 
+   filter(age != "1" |
+           HIV != "2" |
+           heart_attack_stroke != "2" |
+           cancer != "2" |
+          autoimmune != "10" |
+           splenectomy != "2" |
+           acute._infection != "2" |
+           chronic_infection != "2" |
+           meds_general != "8" |
+           immunomodulators != "7" |
+           monoclonals != "8" |
+           IVIG != "2"
+           ) %>% 
+  select(RecipientEmail)
+
+t3_t4_ineligible <- bind_rows(t3_ineligible, t4_ineligible)
+
+
+# Filter out participants who don't meet medical eligiblity at T3/T4
+
+t1_raw <- t1_raw %>% 
+  filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+
+t2_raw <- t2_raw %>% 
+   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+
+t3_raw <- t3_raw %>% 
+   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+
+t4_raw <- t4_raw %>% 
+   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+
+
+
+```
+
+## Participant takes survey more than once 
+
+```{r}
+
+# Remove duplicate responses, keeping only the first response
+
+t1_raw <- t1_raw %>% 
+  arrange(StartDate) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE)
+
+t2_raw <- t2_raw %>% 
+  arrange(StartDate) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE)
+
+t3_raw <- t3_raw %>% 
+  arrange(StartDate) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE)
+
+t4_raw <- t4_raw %>% 
+  arrange(StartDate) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE)
+
+```
+
+
+## Did not complete T1 survey and T1 blood sample
+
+```{r}
+
+# make list of participants who completed T1 survey and sample
+
+t1_completed <- t1_raw %>% 
+  filter(Finished == "1") %>% 
+  select(RecipientEmail) %>% 
+  filter(RecipientEmail %in% t1_sample_completed$RecipientEmail)
+
+# filter out participants who did not complete T1 survey and sample
+
+t1_raw <- t1_raw %>% 
+  filter(RecipientEmail %in% t1_completed$RecipientEmail)
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% t1_completed$RecipientEmail)
+
+t3_raw <- t3_raw %>% 
+  filter(RecipientEmail %in% t1_completed$RecipientEmail)
+
+t4_raw <- t4_raw %>% 
+  filter(RecipientEmail %in% t1_completed$RecipientEmail)
+
+```
+
+## Participant was not successfully randomized
+
+```{r}
+
+# Make a list of participants who were successfully randomized
+
+randomized <- t2_raw %>% 
+  filter(!(is.na(FL_14_DO))) %>% 
+  select(RecipientEmail)
+
+# Filter out participants who were not successfully randomized
+
+t1_raw <- t1_raw %>% 
+  filter(RecipientEmail %in% randomized$RecipientEmail)
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% randomized$RecipientEmail)
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% randomized$RecipientEmail)
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% randomized$RecipientEmail)
+
+```
+
+
+## Participant takes less than 1/3 of median time to complete T1 survey
+
+```{r}
+
+t1_raw <- t1_raw %>% 
+  filter(as.numeric(Duration..in.seconds.) >= (median(as.numeric(t1_raw$Duration..in.seconds.))/3))
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t3_raw <- t3_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t4_raw <- t4_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+
+```
+
+# Merge data
+
+## Change name of condition variable
+
+```{r}
+
+t2_raw <- t2_raw %>% 
+  rename("Condition" = "FL_14_DO")
+
+```
+
+
+## Add timepoint indicator to column names
+
+```{r}
+
+# T1
+
+colnames(t1_raw) <- paste(colnames(t1_raw), "t1", sep = "_") 
+
+t1_raw <- t1_raw %>% 
+  rename("RecipientEmail" = "RecipientEmail_t1")
+
+# T2
+
+colnames(t2_raw) <- paste(colnames(t2_raw), "t2", sep = "_") 
+
+t2_raw <- t2_raw %>% 
+  rename("RecipientEmail" = "RecipientEmail_t2")
+
+
+# T3
+
+colnames(t3_raw) <- paste(colnames(t3_raw), "t3", sep = "_") 
+
+t3_raw <- t3_raw %>% 
+  rename("RecipientEmail" = "RecipientEmail_t3")
+
+# T4
+
+colnames(t4_raw) <- paste(colnames(t4_raw), "t4", sep = "_") 
+
+t4_raw <- t4_raw %>% 
+  rename("RecipientEmail" = "RecipientEmail_t4")
+
+
+```
+
+## Merge data in wide format using left_joins
+
+```{r}
+
+# Merge T1 and T2 dataframes using left_join
+
+t1_t2_physio <- left_join(t1_raw, t2_raw, by = "RecipientEmail")
+
+# Merge T3 and T4 dataframes using left_join
+
+t3_t4_physio <- left_join(t3_raw, t4_raw, by = "RecipientEmail")
+
+# Merge all four timpeoints into a single dataframe
+
+physio_merged_raw <- left_join(t1_t2_physio, t3_t4_physio, by = "RecipientEmail")
+
+```
+
+# Recode variables
+
+## Convert chars to nums as necessary
+
+```{r}
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c("Duration..in.seconds._t1",
+                  "Finished_t1",
+                  "prh_routine_t1",
+                  'prh_income_t1',
+                "prh_food_t1",
+                "prh_housing_t1",
+                "prh_medical_t1",
+                "prh_mental_t1", 
+                "prh_support_t1",
+                "prh_stress_t1",
+                "prh_discord_t1",
+                "prh_care_t1",
+                "prh_self_cov_t1",
+                "prh_fam_cov_sym_t1",
+                "prh_ext_cov_sym_t1",
+                "co_mindset_1_t1":"vax_status_t1",
+                "age_t1", "gender_t1", "race_ethnicity_t1",
+                "education_t1":"political_party_t1",
+                "household_18_t1":"prh_self_cov_t1_t2",
+                "cov_number_t2", 
+                "Step.3.Permission_t2",
+                "Duration..in.seconds._t3",
+                "Finished_t3",
+                "age_t3":"autoimmune_t3",
+                "splenectomy_t3":"IVIG_t3",
+                "COVID.Status_t3":"autoimmune_t4",
+                "splenectomy_t4":"prh_routine_t1_t4",
+                "prh_income_t1_t4",
+                "prh_food_t1_t4",
+                "prh_housing_t1_t4",
+                "prh_medical_t1_t4",
+                "prh_mental_t1_t4", 
+                "prh_support_t1_t4",
+                "prh_stress_t1_t4",
+                "prh_discord_t1_t4",
+                "prh_care_t1_t4",
+                "COVID.Status_t4":"seh_1_1_y_t4",
+                "seh_2_1_x_t4", "seh_2_1_y_t4",
+                "she_3_1_x_t4", "she_3_1_y_t4",
+                "optimism_1_t4":"primals_6_t4"), as.numeric))
+
+
+```
+
+## Convert StartDate and EndDate from char to mdy_hm
+
+```{r}
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c("StartDate_t1", "EndDate_t1", "StartDate_t2", "EndDate_t2",
+                "StartDate_t3", "EndDate_t3", "StartDate_t4", "EndDate_t4"), 
+         mdy_hm))
+```
+
+# Change column names to prepare for merging with non-physio and longitudinal
+
+## Change timepoint identifiers
+
+```{r}
+
+colnames(physio_merged_raw) <- gsub("_t1", "_t5", colnames(physio_merged_raw))
+
+colnames(physio_merged_raw) <- gsub("_t2", "_t6", colnames(physio_merged_raw))
+
+colnames(physio_merged_raw) <- gsub("_t3", "_t7", colnames(physio_merged_raw))
+
+colnames(physio_merged_raw) <- gsub("_t4", "_t8", colnames(physio_merged_raw))
+
+
+```
+
+## Add physio branch identifier
+
+```{r}
+
+colnames(physio_merged_raw) <- paste(colnames(physio_merged_raw), "physio", sep = "_")
+
+```
+
+## Additional column name changes as needed
+
+```{r}
+
+physio_merged_raw <- physio_merged_raw %>% 
+  rename("RecipientEmail" = "RecipientEmail_physio",
+    "duration_t5_physio" = "Duration..in.seconds._t5_physio",
+         "duration_t6_physio" = "Duration..in.seconds._t6_physio",
+         "duration_t7_physio" = "Duration..in.seconds._t7_physio",
+         "duration_t8_physio" = "Duration..in.seconds._t8_physio",
+         "phq_1_t5_physio" = "phq._1_t5_physio",
+         "phq_2_t5_physio" = "phq._2_t5_physio",
+         "phq_3_t5_physio" = "phq._3_t5_physio",
+         "phq_4_t5_physio" = "phq._4_t5_physio",
+         "prh_self_cov_t6_physio" = "prh_self_cov_t5_t6_physio",
+         "prh_self_cov_free_t6_physio" = "prh_self_cov_free_t5_t6_physio",
+         "condition_physio" = "Condition_t6_physio",
+         "autoimmune_free_t7_physio" = "autoimmune_9_TEXT_t7_physio",
+         "autoimmune_free_t8_physio" = "autoimmune_9_TEXT_t8_physio",
+         "cov_sym_t7_physio" = "COVID.Symptoms_t7_physio",
+         "cov_sym_free_t7_physio" = "COVID.Symptoms_29_TEXT_t7_physio",
+         "cov_status_t7_physio" = "COVID.Status_t7_physio",
+         "prh_routine_t8_physio" = "prh_routine_t5_t8_physio",
+         "prh_routine_free_t8_physio" = "prh_routine_free_t5_t8_physio",
+          "prh_income_t8_physio" = "prh_income_t5_t8_physio",
+         "prh_income_free_t8_physio" = "prh_income_free_t5_t8_physio",
+           "prh_food_t8_physio" = "prh_food_t5_t8_physio",
+         "prh_food_free_t8_physio" = "prh_food_free_t5_t8_physio",
+           "prh_housing_t8_physio" = "prh_housing_t5_t8_physio",
+         "prh_housing_free_t8_physio" = "prh_housing_free_t5_t8_physio",
+           "prh_medical_t8_physio" = "prh_medical_t5_t8_physio",
+         "prh_medical_free_t8_physio" = "prh_medical_free_t5_t8_physio",
+           "prh_mental_t8_physio" = "prh_mental_t5_t8_physio",
+         "prh_mental_free_t8_physio" = "prh_mental_free_t5_t8_physio",
+           "prh_support_t8_physio" = "prh_support_t5_t8_physio",
+         "prh_support_free_t8_physio" = "prh_support_free_t5_t8_physio",
+           "prh_stress_t8_physio" = "prh_stress_t5_t8_physio",
+         "prh_stress_free_t8_physio" = "prh_stress_free_t5_t8_physio",
+           "prh_discord_t8_physio" = "prh_discord_t5_t8_physio",
+         "prh_discord_free_t8_physio" = "prh_discord_free_t5_t8_physio",
+           "prh_care_t8_physio" = "prh_care_t5_t8_physio",
+         "prh_care_free_t8_physio" = "prh_care_free_t5_t8_physio",
+          "cov_sym_t8_physio" = "COVID.Symptoms_t8_physio",
+         "cov_sym_free_t8_physio" = "COVID.Symptoms_29_TEXT_t8_physio",
+         "cov_status_t8_physio" = "COVID.Status_t8_physio",
+         "cov_vax_stat_t8_physio" = "COVID.Vaccine.Statu_t8_physio",
+         "seh_3_1_x_t8_physio" = "she_3_1_x_t8_physio",
+         "seh_3_1_y_t8_physio" = "she_3_1_y_t8_physio",
+         "seh_3_t8_physio" = "she_3_t8_physio"
+          )
+
+```
+
+# Calculate summary scores
+
+## PTGI full
+
+### Reverse score and rescale items
+
+```{r}
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(ptg_1_t5_physio:ptg_21_t5_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(ptg_1_t7_physio:ptg_21_t7_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(ptg_1_t8_physio:ptg_21_t8_physio), ~.-1))
+
+```
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# Calculate summary scores
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_full_t5_physio = rowMeans(select(., ptg_1_t5_physio:ptg_21_t5_physio)))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_full_t7_physio = rowMeans(select(., ptg_1_t7_physio:ptg_21_t7_physio)))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_full_t8_physio = rowMeans(select(., ptg_1_t8_physio:ptg_21_t8_physio)))
+
+# Make summary score dataframes
+
+ptgi_full_t5_physio_df <- physio_merged_raw %>% 
+  select(ptg_1_t5_physio:ptg_21_t5_physio)
+
+psych::alpha(ptgi_full_t5_physio_df)
+
+ptgi_full_t7_physio_df <- physio_merged_raw %>% 
+  select(ptg_1_t7_physio:ptg_21_t7_physio)
+
+psych::alpha(ptgi_full_t7_physio_df)
+
+
+ptgi_full_t8_physio_df <- physio_merged_raw %>% 
+  select(ptg_1_t8_physio:ptg_21_t8_physio)
+
+psych::alpha(ptgi_full_t8_physio_df)
+
+
+```
+
+## PTGI abridged
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_abridged_t5_physio = (ptg_1_t5_physio + ptg_2_t5_physio + ptg_3_t5_physio + ptg_4_t5_physio + ptg_6_t5_physio + ptg_7_t5_physio + ptg_8_t5_physio + ptg_9_t5_physio + ptg_10_t5_physio + ptg_11_t5_physio + ptg_13_t5_physio + ptg_14_t5_physio + ptg_15_t5_physio + ptg_16_t5_physio + ptg_17_t5_physio + ptg_18_t5_physio + ptg_20_t5_physio + ptg_21_t5_physio)/19)
+
+
+ptgi_abridged_t5_physio_df <- physio_merged_raw %>% 
+  select(ptg_1_t5_physio, ptg_2_t5_physio, ptg_3_t5_physio, ptg_4_t5_physio, ptg_6_t5_physio, ptg_7_t5_physio, ptg_8_t5_physio, ptg_9_t5_physio, ptg_10_t5_physio, ptg_11_t5_physio, ptg_13_t5_physio, ptg_14_t5_physio, ptg_15_t5_physio, ptg_16_t5_physio, ptg_17_t5_physio, ptg_18_t5_physio, ptg_20_t5_physio, ptg_21_t5_physio)
+
+psych::alpha(ptgi_abridged_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_abridged_t7_physio = (ptg_1_t7_physio + ptg_2_t7_physio + ptg_3_t7_physio + ptg_4_t7_physio + ptg_6_t7_physio + ptg_7_t7_physio + ptg_8_t7_physio + ptg_9_t7_physio + ptg_10_t7_physio + ptg_11_t7_physio + ptg_13_t7_physio + ptg_14_t7_physio + ptg_15_t7_physio + ptg_16_t7_physio + ptg_17_t7_physio + ptg_18_t7_physio + ptg_20_t7_physio + ptg_21_t7_physio)/19)
+
+
+ptgi_abridged_t7_physio_df <- physio_merged_raw %>% 
+  select(ptg_1_t7_physio, ptg_2_t7_physio, ptg_3_t7_physio, ptg_4_t7_physio, ptg_6_t7_physio, ptg_7_t7_physio, ptg_8_t7_physio, ptg_9_t7_physio, ptg_10_t7_physio, ptg_11_t7_physio, ptg_13_t7_physio, ptg_14_t7_physio, ptg_15_t7_physio, ptg_16_t7_physio, ptg_17_t7_physio, ptg_18_t7_physio, ptg_20_t7_physio, ptg_21_t7_physio)
+
+psych::alpha(ptgi_abridged_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_abridged_t8_physio = (ptg_1_t8_physio + ptg_2_t8_physio + ptg_3_t8_physio + ptg_4_t8_physio + ptg_6_t8_physio + ptg_7_t8_physio + ptg_8_t8_physio + ptg_9_t8_physio + ptg_10_t8_physio + ptg_11_t8_physio + ptg_13_t8_physio + ptg_14_t8_physio + ptg_15_t8_physio + ptg_16_t8_physio + ptg_17_t8_physio + ptg_18_t8_physio + ptg_20_t8_physio + ptg_21_t8_physio)/19)
+
+
+ptgi_abridged_t8_physio_df <- physio_merged_raw %>% 
+  select(ptg_1_t8_physio, ptg_2_t8_physio, ptg_3_t8_physio, ptg_4_t8_physio, ptg_6_t8_physio, ptg_7_t8_physio, ptg_8_t8_physio, ptg_9_t8_physio, ptg_10_t8_physio, ptg_11_t8_physio, ptg_13_t8_physio, ptg_14_t8_physio, ptg_15_t8_physio, ptg_16_t8_physio, ptg_17_t8_physio, ptg_18_t8_physio, ptg_20_t8_physio, ptg_21_t8_physio)
+
+psych::alpha(ptgi_abridged_t8_physio_df)
+
+```
+
+## PTGI subscales
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+## Relationships 
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_relationships_t5_physio = (ptg_6_t5_physio + ptg_7_t5_physio + 
+                                    ptg_9_t5_physio + ptg_12_t5_physio + ptg_15_t5_physio + ptg_17_t5_physio + ptg_20_t5_physio)/7)
+
+ptgi_relationships_t5_df_physio <- physio_merged_raw %>% 
+  select(ptg_6_t5_physio, ptg_7_t5_physio, 
+                                    ptg_9_t5_physio, ptg_12_t5_physio, ptg_15_t5_physio, ptg_17_t5_physio, ptg_20_t5_physio)
+
+psych::alpha(ptgi_relationships_t5_df_physio)
+
+## Possibilities
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_possibilities_t5_physio = (ptg_2_t5_physio + ptg_13_t5_physio + 
+        ptg_14_t5_physio + ptg_18_t5_physio + ptg_21_t5_physio)/5)
+
+ptgi_possibilities_t5_df_physio <- physio_merged_raw %>% 
+  select(ptg_2_t5_physio, ptg_13_t5_physio, 
+        ptg_14_t5_physio, ptg_18_t5_physio, ptg_21_t5_physio)
+
+psych::alpha(ptgi_possibilities_t5_df_physio)
+
+## Strength
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_strength_t5_physio = (ptg_4_t5_physio + ptg_8_t5_physio + 
+        ptg_10_t5_physio + ptg_16_t5_physio)/4)
+
+ptgi_strength_t5_df_physio <- physio_merged_raw %>% 
+  select(ptg_4_t5_physio, ptg_8_t5_physio,  
+        ptg_10_t5_physio, ptg_16_t5_physio)
+
+psych::alpha(ptgi_strength_t5_df_physio)
+
+## Appreciation
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_appreciation_t5_physio = (ptg_1_t5_physio + ptg_3_t5_physio + 
+        ptg_11_t5_physio)/3)
+
+ptgi_appreciation_t5_df_physio <- physio_merged_raw %>% 
+  select(ptg_1_t5_physio, ptg_3_t5_physio,  
+        ptg_11_t5_physio)
+
+psych::alpha(ptgi_appreciation_t5_df_physio)
+
+## Spiritual
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_spiritual_t5_physio = (ptg_5_t5_physio + ptg_19_t5_physio)/2)
+
+ptgi_spiritual_t5_df_physio <- physio_merged_raw %>% 
+  select(ptg_5_t5_physio, ptg_19_t5_physio)
+
+psych::alpha(ptgi_spiritual_t5_df_physio)
+
+
+# T7
+
+## Relationships 
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_relationships_t7_physio = (ptg_6_t7_physio + ptg_7_t7_physio + 
+                                    ptg_9_t7_physio + ptg_12_t7_physio + ptg_15_t7_physio + ptg_17_t7_physio + ptg_20_t7_physio)/7)
+
+ptgi_relationships_t7_df_physio <- physio_merged_raw %>% 
+  select(ptg_6_t7_physio, ptg_7_t7_physio, 
+                                    ptg_9_t7_physio, ptg_12_t7_physio, ptg_15_t7_physio, ptg_17_t7_physio, ptg_20_t7_physio)
+
+psych::alpha(ptgi_relationships_t7_df_physio)
+
+## Possibilities
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_possibilities_t7_physio = (ptg_2_t7_physio + ptg_13_t7_physio + 
+        ptg_14_t7_physio + ptg_18_t7_physio + ptg_21_t7_physio)/5)
+
+ptgi_possibilities_t7_df_physio <- physio_merged_raw %>% 
+  select(ptg_2_t7_physio, ptg_13_t7_physio, 
+        ptg_14_t7_physio, ptg_18_t7_physio, ptg_21_t7_physio)
+
+psych::alpha(ptgi_possibilities_t7_df_physio)
+
+## Strength
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_strength_t7_physio = (ptg_4_t7_physio + ptg_8_t7_physio + 
+        ptg_10_t7_physio + ptg_16_t7_physio)/4)
+
+ptgi_strength_t7_df_physio <- physio_merged_raw %>% 
+  select(ptg_4_t7_physio, ptg_8_t7_physio,  
+        ptg_10_t7_physio, ptg_16_t7_physio)
+
+psych::alpha(ptgi_strength_t7_df_physio)
+
+## Appreciation
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_appreciation_t7_physio = (ptg_1_t7_physio + ptg_3_t7_physio + 
+        ptg_11_t7_physio)/3)
+
+ptgi_appreciation_t7_df_physio <- physio_merged_raw %>% 
+  select(ptg_1_t7_physio, ptg_3_t7_physio,  
+        ptg_11_t7_physio)
+
+psych::alpha(ptgi_appreciation_t7_df_physio)
+
+## Spiritual
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_spiritual_t7_physio = (ptg_5_t7_physio + ptg_19_t7_physio)/2)
+
+ptgi_spiritual_t7_df_physio <- physio_merged_raw %>% 
+  select(ptg_5_t7_physio, ptg_19_t7_physio)
+
+psych::alpha(ptgi_spiritual_t7_df_physio)
+
+# T8
+
+## Relationships 
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_relationships_t8_physio = (ptg_6_t8_physio + ptg_7_t8_physio + 
+                                    ptg_9_t8_physio + ptg_12_t8_physio + ptg_15_t8_physio + ptg_17_t8_physio + ptg_20_t8_physio)/7)
+
+ptgi_relationships_t8_df_physio <- physio_merged_raw %>% 
+  select(ptg_6_t8_physio, ptg_7_t8_physio, 
+                                    ptg_9_t8_physio, ptg_12_t8_physio, ptg_15_t8_physio, ptg_17_t8_physio, ptg_20_t8_physio)
+
+psych::alpha(ptgi_relationships_t8_df_physio)
+
+## Possibilities
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_possibilities_t8_physio = (ptg_2_t8_physio + ptg_13_t8_physio + 
+        ptg_14_t8_physio + ptg_18_t8_physio + ptg_21_t8_physio)/5)
+
+ptgi_possibilities_t8_df_physio <- physio_merged_raw %>% 
+  select(ptg_2_t8_physio, ptg_13_t8_physio, 
+        ptg_14_t8_physio, ptg_18_t8_physio, ptg_21_t8_physio)
+
+psych::alpha(ptgi_possibilities_t8_df_physio)
+
+## Strength
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_strength_t8_physio = (ptg_4_t8_physio + ptg_8_t8_physio + 
+        ptg_10_t8_physio + ptg_16_t8_physio)/4)
+
+ptgi_strength_t8_df_physio <- physio_merged_raw %>% 
+  select(ptg_4_t8_physio, ptg_8_t8_physio,  
+        ptg_10_t8_physio, ptg_16_t8_physio)
+
+psych::alpha(ptgi_strength_t8_df_physio)
+
+## Appreciation
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_appreciation_t8_physio = (ptg_1_t8_physio + ptg_3_t8_physio + 
+        ptg_11_t8_physio)/3)
+
+ptgi_appreciation_t8_df_physio <- physio_merged_raw %>% 
+  select(ptg_1_t8_physio, ptg_3_t8_physio,  
+        ptg_11_t8_physio)
+
+psych::alpha(ptgi_appreciation_t8_df_physio)
+
+## Spiritual
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(ptgi_spiritual_t8_physio = (ptg_5_t8_physio + ptg_19_t8_physio)/2)
+
+ptgi_spiritual_t8_df_physio <- physio_merged_raw %>% 
+  select(ptg_5_t8_physio, ptg_19_t8_physio)
+
+psych::alpha(ptgi_spiritual_t8_df_physio)
+
+
+
+```
+
+
+# CO Mindset
+
+## Reverse score items 
+
+```{r}
+
+#T5 Reverse Scoring 
+
+co_reverse_columns_t5 <- physio_merged_raw %>% 
+  select(co_mindset_1_t5_physio, co_mindset_3_t5_physio, co_mindset_4_t5_physio,
+         co_mindset_7_t5_physio, co_mindset_9_t5_physio) %>% 
+  colnames()
+
+
+physio_merged_raw[ ,co_reverse_columns_t5] <- 8 - physio_merged_raw[ ,co_reverse_columns_t5]
+
+
+
+#T7 Reverse Scoring 
+
+co_reverse_columns_t7 <- physio_merged_raw %>% 
+  select(co_mindset_1_t7_physio, co_mindset_3_t7_physio, co_mindset_4_t7_physio,
+         co_mindset_7_t7_physio, co_mindset_9_t7_physio) %>% 
+  colnames()
+
+
+physio_merged_raw[ ,co_reverse_columns_t7] <- 8 - physio_merged_raw[ ,co_reverse_columns_t7]
+
+#T8 Reverse Scoring 
+
+co_reverse_columns_t8 <- physio_merged_raw %>% 
+  select(co_mindset_1_t8_physio, co_mindset_3_t8_physio, co_mindset_4_t8_physio,
+         co_mindset_7_t8_physio, co_mindset_9_t8_physio) %>% 
+  colnames()
+
+
+physio_merged_raw[ ,co_reverse_columns_t8] <- 8 - physio_merged_raw[ ,co_reverse_columns_t8]
+
+
+```
+
+## Calculate summary scores and alphas CO Mindset 
+
+```{r calculate summary scores for comindset}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(co_mindset_t5_physio = rowMeans(select(., co_mindset_1_t5_physio:co_mindset_10_t5_physio)))
+
+co_mindset_t5_physio_df <- physio_merged_raw %>% 
+  select(co_mindset_1_t5_physio:co_mindset_10_t5_physio)
+
+psych::alpha(co_mindset_t5_physio_df)
+
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(co_mindset_t7_physio = rowMeans(select(., co_mindset_1_t7_physio:co_mindset_10_t7_physio)))
+
+co_mindset_t7_physio_df <- physio_merged_raw %>% 
+  select(co_mindset_1_t7_physio:co_mindset_10_t7_physio)
+
+psych::alpha(co_mindset_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(co_mindset_t8_physio = rowMeans(select(., co_mindset_1_t8_physio:co_mindset_10_t8_physio)))
+
+co_mindset_t8_physio_df <- physio_merged_raw %>% 
+  select(co_mindset_1_t8_physio:co_mindset_10_t8_physio)
+
+psych::alpha(co_mindset_t8_physio_df)
+
+```
+
+## Positive Affect
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(pos_affect_t5_physio = rowSums(select(., panas_1_t5_physio, panas_3_t5_physio , panas_5_t5_physio, panas_9_t5_physio, panas_10_t5_physio, panas_12_t5_physio,  panas_14_t5_physio, panas_16_t5_physio, panas_17_t5_physio, panas_19_t5_physio)))
+
+pos_affect_t5_physio_df <- physio_merged_raw %>% 
+  select(panas_1_t5_physio, panas_3_t5_physio , panas_5_t5_physio, panas_9_t5_physio, panas_10_t5_physio, panas_12_t5_physio,  panas_14_t5_physio, panas_16_t5_physio, panas_17_t5_physio, panas_19_t5_physio)
+
+psych::alpha(pos_affect_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(pos_affect_t7_physio = rowSums(select(., panas_1_t7_physio, panas_3_t7_physio , panas_5_t7_physio, panas_9_t7_physio, panas_10_t7_physio, panas_12_t7_physio,  panas_14_t7_physio, panas_16_t7_physio, panas_17_t7_physio, panas_19_t7_physio)))
+
+pos_affect_t7_physio_df <- physio_merged_raw %>% 
+  select(panas_1_t7_physio, panas_3_t7_physio , panas_5_t7_physio, panas_9_t7_physio, panas_10_t7_physio, panas_12_t7_physio,  panas_14_t7_physio, panas_16_t7_physio, panas_17_t7_physio, panas_19_t7_physio)
+
+psych::alpha(pos_affect_t7_physio_df)
+
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(pos_affect_t8_physio = rowSums(select(., panas_1_t8_physio, panas_3_t8_physio , panas_5_t8_physio, panas_9_t8_physio, panas_10_t8_physio, panas_12_t8_physio,  panas_14_t8_physio, panas_16_t8_physio, panas_17_t8_physio, panas_19_t8_physio)))
+
+pos_affect_t8_physio_df <- physio_merged_raw %>% 
+  select(panas_1_t8_physio, panas_3_t8_physio , panas_5_t8_physio, panas_9_t8_physio, panas_10_t8_physio, panas_12_t8_physio,  panas_14_t8_physio, panas_16_t8_physio, panas_17_t8_physio, panas_19_t8_physio)
+
+psych::alpha(pos_affect_t8_physio_df)
+
+
+```
+
+
+## Negative Affect
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(neg_affect_t5_physio = rowSums(select(., panas_2_t5_physio, panas_4_t5_physio , panas_6_t5_physio, panas_7_t5_physio, panas_8_t5_physio, panas_11_t5_physio,  panas_13_t5_physio, panas_15_t5_physio, panas_18_t5_physio, panas_20_t5_physio)))
+
+neg_affect_t5_physio_df <- physio_merged_raw %>% 
+  select(panas_2_t5_physio, panas_4_t5_physio , panas_6_t5_physio, panas_7_t5_physio, panas_8_t5_physio, panas_11_t5_physio,  panas_13_t5_physio, panas_15_t5_physio, panas_18_t5_physio, panas_20_t5_physio)
+
+psych::alpha(neg_affect_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(neg_affect_t7_physio = rowSums(select(., panas_2_t7_physio, panas_4_t7_physio , panas_6_t7_physio, panas_7_t7_physio, panas_8_t7_physio, panas_11_t7_physio,  panas_13_t7_physio, panas_15_t7_physio, panas_18_t7_physio, panas_20_t7_physio)))
+
+neg_affect_t7_physio_df <- physio_merged_raw %>% 
+  select(panas_2_t7_physio, panas_4_t7_physio , panas_6_t7_physio, panas_7_t7_physio, panas_8_t7_physio, panas_11_t7_physio,  panas_13_t7_physio, panas_15_t7_physio, panas_18_t7_physio, panas_20_t7_physio)
+
+psych::alpha(neg_affect_t7_physio_df)
+
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(neg_affect_t8_physio = rowSums(select(., panas_2_t8_physio, panas_4_t8_physio , panas_6_t8_physio, panas_7_t8_physio, panas_8_t8_physio, panas_11_t8_physio,  panas_13_t8_physio, panas_15_t8_physio, panas_18_t8_physio, panas_20_t8_physio)))
+
+neg_affect_t8_physio_df <- physio_merged_raw %>% 
+  select(panas_2_t8_physio, panas_4_t8_physio , panas_6_t8_physio, panas_7_t8_physio, panas_8_t8_physio, panas_11_t8_physio,  panas_13_t8_physio, panas_15_t8_physio, panas_18_t8_physio, panas_20_t8_physio)
+
+psych::alpha(neg_affect_t8_physio_df)
+
+
+```
+
+## PHQ-4
+
+### Rescale items
+
+```{r}
+
+# Rescale from a 1-4 to a 0-3 scale
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(phq_1_t5_physio:phq_4_t5_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(phq_1_t7_physio:phq_4_t7_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(phq_1_t8_physio:phq_4_t8_physio), ~.-1))
+
+
+```
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_full_t5_physio = rowSums(select(., phq_1_t5_physio:phq_4_t5_physio)))
+
+phq_full_t5_physio_df <- physio_merged_raw %>% 
+  select(phq_1_t5_physio:phq_4_t5_physio)
+
+psych::alpha(phq_full_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_full_t7_physio = rowSums(select(., phq_1_t7_physio:phq_4_t7_physio)))
+
+phq_full_t7_physio_df <- physio_merged_raw %>% 
+  select(phq_1_t7_physio:phq_4_t7_physio)
+
+psych::alpha(phq_full_t7_physio_df)
+
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_full_t8_physio = rowSums(select(., phq_1_t8_physio:phq_4_t8_physio)))
+
+phq_full_t8_physio_df <- physio_merged_raw %>% 
+  select(phq_1_t8_physio:phq_4_t8_physio)
+
+psych::alpha(phq_full_t8_physio_df)
+
+```
+
+## PHQ - Anxiety
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_anxiety_t5_physio = rowSums(select(., phq_1_t5_physio:phq_2_t5_physio)))
+
+phq_anxiety_t5_physio_df <- physio_merged_raw %>% 
+  select(phq_1_t5_physio:phq_2_t5_physio)
+
+psych::alpha(phq_anxiety_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_anxiety_t7_physio = rowSums(select(., phq_1_t7_physio:phq_2_t7_physio)))
+
+phq_anxiety_t7_physio_df <- physio_merged_raw %>% 
+  select(phq_1_t7_physio:phq_2_t7_physio)
+
+psych::alpha(phq_anxiety_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_anxiety_t8_physio = rowSums(select(., phq_1_t8_physio:phq_2_t8_physio)))
+
+phq_anxiety_t8_physio_df <- physio_merged_raw %>% 
+  select(phq_1_t8_physio:phq_2_t8_physio)
+
+psych::alpha(phq_anxiety_t8_physio_df)
+
+```
+
+## PHQ - Depression
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_depression_t5_physio = rowSums(select(., phq_3_t5_physio:phq_4_t5_physio)))
+
+phq_depression_t5_physio_df <- physio_merged_raw %>% 
+  select(phq_3_t5_physio:phq_4_t5_physio)
+
+psych::alpha(phq_depression_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_depression_t7_physio = rowSums(select(., phq_3_t7_physio:phq_4_t7_physio)))
+
+phq_depression_t7_physio_df <- physio_merged_raw %>% 
+  select(phq_3_t7_physio:phq_4_t7_physio)
+
+psych::alpha(phq_depression_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(phq_depression_t8_physio = rowSums(select(., phq_3_t8_physio:phq_4_t8_physio)))
+
+phq_depression_t8_physio_df <- physio_merged_raw %>% 
+  select(phq_3_t8_physio:phq_4_t8_physio)
+
+psych::alpha(phq_depression_t8_physio_df)
+
+```
+
+## Social Well-Being (MHC-SF Social Well-Being subscale)
+
+### Rescale items
+
+```{r}
+
+# Rescale items from a 1-6 to a 0-5 scale
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(social_wellbeing_1_t5_physio:social_wellbeing_5_t5_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(social_wellbeing_1_t7_physio:social_wellbeing_5_t7_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(social_wellbeing_1_t8_physio:social_wellbeing_5_t8_physio), ~.-1))
+
+```
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(swb_t5_physio = rowSums(select(., social_wellbeing_1_t5_physio:social_wellbeing_5_t5_physio)))
+
+swb_t5_physio_df <- physio_merged_raw %>% 
+  select(social_wellbeing_1_t5_physio:social_wellbeing_5_t5_physio)
+
+psych::alpha(swb_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(swb_t7_physio = rowSums(select(., social_wellbeing_1_t7_physio:social_wellbeing_5_t7_physio)))
+
+swb_t7_physio_df <- physio_merged_raw %>% 
+  select(social_wellbeing_1_t7_physio:social_wellbeing_5_t7_physio)
+
+psych::alpha(swb_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(swb_t8_physio = rowSums(select(., social_wellbeing_1_t8_physio:social_wellbeing_5_t8_physio)))
+
+swb_t8_physio_df <- physio_merged_raw %>% 
+  select(social_wellbeing_1_t8_physio:social_wellbeing_5_t8_physio)
+
+psych::alpha(swb_t8_physio_df)
+
+
+```
+
+
+
+## Global Health - Combined (Physical, Mental, QoL)
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(global_health_full_t5_physio = rowMeans(select(., global_health_base_1_t6_physio:global_health_base_3_t6_physio)))
+
+global_health_full_t5_physio_df <- physio_merged_raw %>% 
+  select(global_health_base_1_t6_physio:global_health_base_3_t6_physio)
+
+psych::alpha(global_health_full_t5_physio_df)
+
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(global_health_full_t7_physio = rowMeans(select(., global_wellbeing_1_t7_physio:global_wellbeing_3_t7_physio)))
+
+global_health_full_t7_physio_df <- physio_merged_raw %>% 
+  select(global_wellbeing_1_t7_physio:global_wellbeing_3_t7_physio)
+
+psych::alpha(global_health_full_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(global_health_full_t8_physio = rowMeans(select(., global_wellbeing_1_t8_physio:global_wellbeing_3_t8_physio)))
+
+global_health_full_t8_physio_df <- physio_merged_raw %>% 
+  select(global_wellbeing_1_t8_physio:global_wellbeing_3_t8_physio)
+
+psych::alpha(global_health_full_t8_physio_df)
+
+```
+
+## Meaning - Presence Subscale
+
+### Reverse score items
+
+```{r}
+
+physio_merged_raw[ ,"meaning_base_6_t6_physio"] <- 8 - physio_merged_raw[ ,"meaning_base_6_t6_physio"]
+
+physio_merged_raw[ ,"meaning_6_t7_physio"] <- 8 - physio_merged_raw[ ,"meaning_6_t7_physio"]
+
+physio_merged_raw[ ,"meaning_6_t8_physio"] <- 8 - physio_merged_raw[ ,"meaning_6_t8_physio"]
+
+```
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(meaning_presence_t5_physio = rowSums(select(., meaning_base_1_t6_physio, meaning_base_4_t6_physio:meaning_base_6_t6_physio)))
+
+meaning_presence_t5_physio_df <- physio_merged_raw %>% 
+  select(meaning_base_1_t6_physio, meaning_base_4_t6_physio:meaning_base_6_t6_physio)
+
+psych::alpha(meaning_presence_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(meaning_presence_t7_physio = rowSums(select(., meaning_1_t7_physio, meaning_4_t7_physio:meaning_6_t7_physio)))
+
+meaning_presence_t7_physio_df <- physio_merged_raw %>% 
+  select(meaning_1_t7_physio, meaning_4_t7_physio:meaning_6_t7_physio)
+
+psych::alpha(meaning_presence_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(meaning_presence_t8_physio = rowSums(select(., meaning_1_t8_physio, meaning_4_t8_physio:meaning_6_t8_physio)))
+
+meaning_presence_t8_physio_df <- physio_merged_raw %>% 
+  select(meaning_1_t8_physio, meaning_4_t8_physio:meaning_6_t8_physio)
+
+psych::alpha(meaning_presence_t8_physio_df)
+
+
+
+```
+
+## Meaning - Search subscale
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(meaning_search_t5_physio = rowSums(select(.,meaning_base_2_t6_physio, meaning_base_3_t6_physio)))
+
+meaning_search_t5_physio_df <- physio_merged_raw %>% 
+  select(meaning_base_2_t6_physio, meaning_base_3_t6_physio)
+
+psych::alpha(meaning_search_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(meaning_search_t7_physio = rowSums(select(., meaning_2_t7_physio, meaning_3_t7_physio)))
+
+meaning_search_t7_physio_df <- physio_merged_raw %>% 
+  select(meaning_2_t7_physio, meaning_3_t7_physio)
+
+psych::alpha(meaning_search_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(meaning_search_t8_physio = rowSums(select(., meaning_2_t8_physio, meaning_3_t8_physio)))
+
+meaning_search_t8_physio_df <- physio_merged_raw %>% 
+  select(meaning_2_t8_physio, meaning_3_t8_physio)
+
+psych::alpha(meaning_search_t8_physio_df)
+
+
+```
+
+## Resilience
+
+### Reverse score items
+
+```{r}
+
+# T5
+
+physio_merged_raw[ ,"resilience_base_2_t6_physio"] <- 6 - physio_merged_raw[ ,"resilience_base_2_t6_physio"]
+
+physio_merged_raw[ ,"resilience_base_3_t6_physio"] <- 6 - physio_merged_raw[ ,"resilience_base_3_t6_physio"]
+
+# T7
+
+physio_merged_raw[ ,"resilience_2_t7_physio"] <- 6 - physio_merged_raw[ ,"resilience_2_t7_physio"]
+
+physio_merged_raw[ ,"resilience_3_t7_physio"] <- 6 - physio_merged_raw[ ,"resilience_3_t7_physio"]
+
+# T8
+
+physio_merged_raw[ ,"resilience_2_t8_physio"] <- 6 - physio_merged_raw[ ,"resilience_2_t8_physio"]
+
+physio_merged_raw[ ,"resilience_3_t8_physio"] <- 6 - physio_merged_raw[ ,"resilience_3_t8_physio"]
+
+
+```
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(resilience_t5_physio = rowSums(select(.,resilience_base_1_t6_physio:resilience_base_4_t6_physio)))
+
+resilience_t5_physio_df <- physio_merged_raw %>% 
+  select(resilience_base_1_t6_physio:resilience_base_4_t6_physio)
+
+psych::alpha(resilience_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(resilience_t7_physio = rowSums(select(.,resilience_1_t7_physio:resilience_4_t7_physio)))
+
+resilience_t7_physio_df <- physio_merged_raw %>% 
+  select(resilience_1_t7_physio:resilience_4_t7_physio)
+
+psych::alpha(resilience_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(resilience_t8_physio = rowSums(select(.,resilience_1_t8_physio:resilience_4_t8_physio)))
+
+resilience_t8_physio_df <- physio_merged_raw %>% 
+  select(resilience_1_t8_physio:resilience_4_t8_physio)
+
+psych::alpha(resilience_t8_physio_df)
+
+
+```
+
+## Closeness
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(closeness_t5_physio = rowSums(select(.,closeness_base_1_t6_physio:closeness_base_4_t6_physio)))
+
+closeness_t5_physio_df <- physio_merged_raw %>% 
+  select(closeness_base_1_t6_physio:closeness_base_4_t6_physio)
+
+psych::alpha(closeness_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(closeness_t7_physio = rowSums(select(.,closeness_1_t7_physio:closeness_4_t7_physio)))
+
+closeness_t7_physio_df <- physio_merged_raw %>% 
+  select(closeness_1_t7_physio:closeness_4_t7_physio)
+
+psych::alpha(closeness_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(closeness_t8_physio = rowSums(select(.,closeness_1_t8_physio:closeness_4_t8_physio)))
+
+closeness_t8_physio_df <- physio_merged_raw %>% 
+  select(closeness_1_t8_physio:closeness_4_t8_physio)
+
+psych::alpha(closeness_t8_physio_df)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+# Make and export identifying key
+
+```{r}
+
+# Add participant_id column
+
+physio_merged_raw <- id_key %>% 
+  select(participant_id, RecipientEmail) %>% 
+  inner_join(physio_merged_raw, by = "RecipientEmail")
+
+
+# Make identifying key
+
+physio_id_key <- physio_merged_raw %>% 
+  select(participant_id, RecipientEmail, StartDate_t5_physio, EndDate_t5_physio, duration_t5_physio,
+         Finished_t5_physio, RecipientLastName_t5_physio,
+         RecipientFirstName_t5_physio, LocationLatitude_t5_physio, LocationLongitude_t5_physio, hipaa_authorization_1_t5_physio,
+         hipaa_authorization_2_t5_physio, first_name_t5_physio, last_name_t5_physio, address_t5_physio, apartment_t5_physio,
+         city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, StartDate_t6_physio, EndDate_t6_physio,
+         duration_t6_physio, Finished_t6_physio, RecipientFirstName_t6_physio, RecipientLastName_t6_physio, LocationLatitude_t6_physio, LocationLongitude_t6_physio, StartDate_t7_physio, EndDate_t7_physio, duration_t7_physio, 
+         Finished_t7_physio, RecipientFirstName_t7_physio, RecipientLastName_t7_physio, LocationLatitude_t7_physio, LocationLongitude_t7_physio, StartDate_t8_physio, EndDate_t8_physio, duration_t8_physio, Finished_t8_physio,
+         RecipientFirstName_t8_physio, RecipientLastName_t8_physio, LocationLatitude_t8_physio, LocationLongitude_t8_physio
+         )
+
+# Remove unnecessary data from physio_merged
+
+physio_merged_raw <- physio_merged_raw %>% 
+  select(-c(StartDate_t5_physio, EndDate_t5_physio, RecipientLastName_t5_physio,
+         RecipientFirstName_t5_physio, LocationLatitude_t5_physio, LocationLongitude_t5_physio, hipaa_authorization_1_t5_physio,
+         hipaa_authorization_2_t5_physio, first_name_t5_physio, last_name_t5_physio, address_t5_physio, apartment_t5_physio,
+         city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, StartDate_t6_physio, EndDate_t6_physio,
+         RecipientFirstName_t6_physio, RecipientLastName_t6_physio, LocationLatitude_t6_physio, LocationLongitude_t6_physio,
+         con_vid_1_time_First.Click_t6_physio:con_vid_2_time_Click.Count_t6_physio, 
+         con_vid_3_time_First.Click_t6_physio:con_vid_3_time_Click.Count_t6_physio,
+         con_vid_4_time_First.Click_t6_physio:con_vid_4_time_Click.Count_t6_physio,
+         con_vid_5_time_First.Click_t6_physio:con_vid_5_time_Click.Count_t6_physio,
+         Part.1.Vid.1.Timing_First.Click_t6_physio:Part.1.Vid.1.Timing_Click.Count_t6_physio,
+         Part.1.Vid.2.Timing_First.Click_t6_physio:Part.1.Vid.2.Timing_Click.Count_t6_physio,
+         Step.2.Vid.1.Time_First.Click_t6_physio:Step.2.Vid.1.Time_Click.Count_t6_physio,
+         Part.2.Vid.2.Timing_First.Click_t6_physio:Part.2.Vid.2.Timing_Click.Count_t6_physio,
+         Step.2.Vid.3.Time_First.Click_t6_physio:Step.2.Vid.3.Time_Click.Count_t6_physio,
+         StartDate_t7_physio, EndDate_t7_physio, RecipientFirstName_t7_physio, RecipientLastName_t7_physio, LocationLatitude_t7_physio, LocationLongitude_t7_physio, StartDate_t8_physio, EndDate_t8_physio,
+         RecipientFirstName_t8_physio, RecipientLastName_t8_physio, LocationLatitude_t8_physio, LocationLongitude_t8_physio))
+
+
+```
+
+
+# Write ID key to Box
+
+```{r}
+
+write.csv(physio_id_key, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys/ROTP_Physio_ID_Key.csv")
+
+```
+
+Write merged raw dataset to Box
+
+```{r}
+
+write.csv(physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/ROTP_Physio_Summaries.csv")
+
+
+```
+
+

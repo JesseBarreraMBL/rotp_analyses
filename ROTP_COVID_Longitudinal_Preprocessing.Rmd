@@ -1,0 +1,75 @@
+---
+title: "ROTP Longitudinal Preprocessing"
+author: "Jesse Barrera"
+output: html_document
+date: "2023-04-25"
+---
+
+# Load packages
+
+```{r}
+
+library (readr)
+library(dplyr)
+library(psych)
+library(lubridate)
+library(mice)
+
+```
+
+# Import raw data
+
+```{r}
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Longitudinal")
+
+
+longitudinal_raw <- read.csv("COVID_Longitudinal_Raw.csv", na.strings = c("", " "))
+
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys")
+
+longitudinal_id_key <- read.csv("ROTP_Longitudinal_ID_Key.csv")
+
+```
+
+# Combine raw data and id key 
+
+```{r}
+
+# Remove unecessary columns from ID Key
+
+longitudinal_id_key <- longitudinal_id_key %>% 
+  select(participant_id, email)
+
+# Merge ID key with raw data
+
+longitudinal_raw <- longitudinal_raw %>% 
+  left_join(longitudinal_id_key, by = "participant_id") %>% 
+  select(-c("participant_id"))
+```
+
+# Remove unecessary Qualtrics metadata
+
+```{r}
+
+longitudinal_raw <- longitudinal_raw %>% 
+  select(-c("X.1":"recorded_date_t1",
+            "X_t2":"recorded_date_t2",
+            "X_t3":"recorded_date_t3",
+            "start_date_t4":"user_language_t4"))
+
+```
+
+# Write data to Box
+
+```{r}
+
+write.csv(longitudinal_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Longitudinal/COVID_Longitudinal_Identifiable.csv")
+
+```
+
+
+
+
+

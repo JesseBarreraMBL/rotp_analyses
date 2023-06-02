@@ -1,0 +1,115 @@
+---
+title: "ROTP Merge and Deidentify"
+authorL "Jesse Barrera"
+output: html_document
+date: "2023-04-27"
+---
+
+# Load packages
+
+```{r}
+
+library (readr)
+library(dplyr)
+library(psych)
+library(lubridate)
+library(mice)
+library(kutils)
+
+```
+
+# Import preprocessed data
+
+```{r}
+
+# Set working directory
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data")
+
+
+# Import 
+
+longitudinal <- read.csv("COVID_Longitudinal_Preprocessed.csv", na.strings = c("", " "))
+
+physio <- read.csv("ROTP_Physio_Summaries.csv", na.strings = c("", " "))
+
+non_physio <- read.csv("ROTP_Non_Physio_Summaries.csv", na.strings = c("", " "))
+
+biomarkers_merged <- read.csv("ROTP_Biomarkers_Merged.csv", na.strings = c("", " "))
+
+```
+
+# Merge datasets
+
+## Merge physio and non-physio
+
+```{r}
+
+# Merge physio and non-physio wide using full_join
+
+# Change format of participant_ids to match
+
+physio <- physio %>% 
+  mutate(participant_id = as.numeric(participant_id) + 500)
+
+non_physio <- non_physio %>% 
+  mutate(participant_id = as.numeric(participant_id))
+
+physio_non_physio_merged <- full_join(physio, non_physio, by = c("RecipientEmail", "participant_id"))
+
+
+```
+
+## Merge physio and non_physio with longitudinal
+
+```{r}
+
+# Rename physio_non_physio_merged email column to match longitudinal
+
+physio_non_physio_merged <- physio_non_physio_merged %>% 
+  rename("email" = "RecipientEmail")
+
+rotp_merged <- left_join(physio_non_physio_merged, longitudinal, by = "email")
+
+
+```
+
+# Merge rotp_merged with biomarkers
+
+```{r}
+
+rotp_merged <- left_join(rotp_merged, biomarkers_merged, by = "participant_id")
+
+```
+
+
+# Export identifying key
+
+```{r}
+
+# Make identifying key
+
+id_key <- rotp_merged %>% 
+  select(participant_id, email)
+
+# Write ID Key to Box
+
+write.csv(id_key, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys/ROTP_ID_Key_Merged.csv")
+
+```
+
+# Deidentify dataset and write to Box
+
+```{r}
+
+rotp_merged <- rotp_merged %>% 
+  select(-c(email, X.x, X.y))
+
+write.csv(rotp_merged, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Deidentified Data/ROTP_Merged_Deidentified.csv")
+
+```
+
+
+
+
+

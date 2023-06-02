@@ -1,0 +1,37 @@
+---
+title: "ROTP Summary Scores"
+author: "Jesse Barrera"
+output: html_document
+date: "2023-04-27"
+---
+
+# Load packages
+
+```{r}
+
+library (readr)
+library(dplyr)
+library(psych)
+library(lubridate)
+library(mice)
+
+```
+
+# Import merged and deidentified data
+
+```{r}
+
+# Set working directory
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Deidentified Data")
+
+
+# Import data
+
+rotp_merged <- read.csv("ROTP_Merged_Deidentified.csv")
+
+```
+
+
+
+

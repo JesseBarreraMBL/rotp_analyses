@@ -1,0 +1,470 @@
+---
+title: "ROTP Biomarker Preprocessing"
+output: html_document
+date: "2023-04-25"
+---
+
+# Load packages
+
+```{r}
+
+library (readr)
+library(dplyr)
+library(psych)
+library(lubridate)
+library(mice)
+library(tidyr)
+
+```
+
+# Import Raw Data
+
+```{r}
+
+# Set working directory
+
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Biomarkers")
+
+# Import Raw Biomarker Data
+
+h48_normalized <- read.csv("H48_Normalized.csv", na.strings = c("", " "))
+
+crp_normalized <- read.csv("CRP_Normalized.csv", na.strings = c("", " "))
+
+```
+
+# Convert datasets from long to wide
+
+## Remove unnecessary metadata 
+
+```{r}
+
+# H48
+
+h48_normalized <- h48_normalized %>% 
+  select(-c(X, pid_timepoint...113, pid_timepoint...57))
+
+# CRP
+
+crp_normalized <- crp_normalized %>% 
+  select(-c(X, X.2, pid_timepoint))
+
+```
+
+
+## Remove participants with no participant id (do not meet inclusion criteria)
+
+```{r}
+
+# H48
+
+h48_normalized <- h48_normalized %>% 
+  filter(participant_id != "NA")
+
+# CRP
+
+crp_normalized <- crp_normalized %>% 
+  filter(participant_id != "NA")
+
+
+```
+
+## Create separate dataframes for each timepoint
+
+```{r}
+
+# H48
+
+h48_t5 <- h48_normalized %>% 
+  filter(timepoint == 1) %>% 
+  select(-c(timepoint))
+
+h48_t7 <- h48_normalized %>% 
+  filter(timepoint == 2) %>% 
+  select(-c(timepoint))
+
+h48_t8 <- h48_normalized %>% 
+  filter(timepoint == 3) %>% 
+  select(-c(timepoint))
+
+
+# CRP
+
+crp_t5 <- crp_normalized %>% 
+  filter(timepoint == 1) %>% 
+  select(-c(timepoint))
+
+crp_t7 <- crp_normalized %>% 
+  filter(timepoint == 2) %>% 
+  select(-c(timepoint))
+
+crp_t8 <- crp_normalized %>% 
+  filter(timepoint == 3) %>% 
+  select(-c(timepoint))
+
+
+```
+
+# Rename columns to prepare for merge
+
+```{r}
+
+# H48
+
+h48_t5 <- h48_t5 %>% 
+  rename(plates_t5 = X.1...3,
+         SDCD40L_t5 = SCD40L...4,
+         EGF_t5 = EGF...5,
+         EOTAXIN.CCL11_t5 = EOTAXIN.CCL11...6,
+         FGF2.FGFB_t5 = FGF2.FGFB...7,
+         FLT3L_t5 = FLT3L...8,
+         FRACTALKINE.CX3CL1_t59 = FRACTALKINE.CX3CL1...9,
+         GCSF.CSF3_t5 = GCSF.CSF3...10,
+         CSF2.GMCSF_t5 = CSF2.GMCSF...11,
+         GROA.KC.CXCL1_t5 = GROA.KC.CXCL1...12,
+         IFNA_t5 = IFNA...13,
+         IFNG_t5 = IFNG...14,
+         IL1A_t5 = IL1A...15,
+         IL1B_t5 = IL1B...16,
+         IL1RA_t5 = IL1RA...17,
+         IL2_t5 = IL2...18,
+         IL3_t5 = IL3...19,
+         IL4_t5 = IL4...20,
+         IL5_t5 = IL5...21,
+         IL6_t5 = IL6...22,
+         IL7_t5 = IL7...23,
+         IL8.CXCL8_t5 = IL8.CXCL8...24,
+         IL9_t5 = IL9...25,
+         IL10_t5 = IL10...26,
+         IL12P40_t5 = IL12P40...27,
+         IL12P70_t5 = IL12P70...28,
+         IL13_t5 = IL13...29,
+         IL15_t5 = IL15...30,
+         IL17A.CTLA8_t5 = IL17A.CTLA8...31,
+         IL18_t5 = IL18...34,
+         IL27_t5 = IL27...36,
+         IP.10.CXCL10_t5 = IP.10.CXCL10...37,
+         MCP1.CCL2_t5 = MCP1.CCL2...38,
+         MCP3.CCL7_t5 = MCP3.CCL7...39,
+         MIG.CXCL9_t5 = MIG.CXCL9...42,
+         MIP1A.CCL3_t5 = MIP1A.CCL3...43,
+         MIP1B.CCL4_t5 = MIP1B.CCL4...44,
+         PDGFAA_t5 = PDGFAA...45,
+        PDGF.AA.AB_t5 = PDGF.AA.AB...46,
+        RANTES.CCL5_t5 = RANTES.CCL5...47,
+        TGFA_t5 = TGFA...48,
+        TNFA_t5 = TNFA...49,
+        TNFB.LYMPHOTOXINA_t5 = TNFB.LYMPHOTOXINA...50,
+        VEGF_t5 = VEGF...51,
+        SCD40L_t5_normalized = SCD40L...60,
+       EGF_t5_normalized = EGF...61,
+       EOTAXIN.CCL11_t5_normalized = EOTAXIN.CCL11...62,
+      FGF2.FGFB_t5_normalized = FGF2.FGFB...63,
+      FLT3L_t5_normalized = FLT3L...64,
+      FRACTALKINE.CX3CL1_t5_normalized = FRACTALKINE.CX3CL1...65,
+      GCSF.CSF3_t5_normalized = GCSF.CSF3...66,
+      CSF2.GMCSF_t5_normalized = CSF2.GMCSF...67,
+      GROA.KC.CXCL1_t5_normalized = GROA.KC.CXCL1...68,
+      IFNA_t5_normalized = IFNA...69,
+      IFNG_t5_normalized = IFNG...70,
+      IL1A_t5_normalized = IL1A...71,
+      IL1B_t5_normalized = IL1B...72,
+      IL1RA_t5_normalized = IL1RA...73,
+      IL2_t5_normalized = IL2...74,
+      IL3_t5_normalized = IL3...75,
+      IL4_t5_normalized = IL4...76,
+      IL5_t5_normalized = IL5...77,
+      IL6_t5_normalized = IL6...78,
+      IL7_t5_normalized = IL7...79,
+      IL8.CXCL8_t5_normalized0 = IL8.CXCL8...80,
+      IL9_t5_normalized = IL9...81,
+      IL10_t5_normalized = IL10...82,
+      IL12P40_t5_normalized = IL12P40...83,
+      IL12P70_t5_normalized = IL12P70...84,
+      IL13_t5_normalized = IL13...85,
+     IL15_t5_normalized = IL15...86,
+     IL17A.CTLA8_t5_normalized = IL17A.CTLA8...87,
+     IL17E.IL25_t5_normalized = IL17E.IL25...88,
+     IL17F_t5_normalized = IL17F...89,
+     IL18_t5_normalized = IL18...90,
+     IL22_t5_normalized = IL22...91,
+     IL27_t5_normalized = IL27...92,
+     IP.10.CXCL10_t5_normalized = IP.10.CXCL10...93,
+     MCP1.CCL2_t5_normalized = MCP1.CCL2...94,
+     MCP3.CCL7_t5_normalized = MCP3.CCL7...95,
+     CSF1.MCFS_t5_normalized = CSF1.MCFS...96,
+     MDC.CCL22_t5_normalized = MDC.CCL22...97,
+     MIG.CXCL9_t5_normalized = MIG.CXCL9...98,
+     MIP1A.CCL3_t5_normalized = MIP1A.CCL3...99,
+     MIP1B.CCL4_t5_normalized = MIP1B.CCL4...100,
+     PDGFAA_t5_normalized = PDGFAA...101,
+     PDGF.AA.AB_t5_normalized = PDGF.AA.AB...102,
+     RANTES.CCL5_t5_normalized = RANTES.CCL5...103,
+     TGFA_t5_normalized = TGFA...104,
+    TNFA_t5_normalized = TNFA...105,
+    TNFB.LYMPHOTOXINA_t5_normalized = TNFB.LYMPHOTOXINA...106,
+    VEGF_t5_normalized = VEGF...107)
+
+
+h48_t7 <- h48_t7 %>% 
+  rename(plates_t7 = X.1...3,
+         SDCD40L_t7 = SCD40L...4,
+         EGF_t7 = EGF...5,
+         EOTAXIN.CCL11_t7 = EOTAXIN.CCL11...6,
+         FGF2.FGFB_t7 = FGF2.FGFB...7,
+         FLT3L_t7 = FLT3L...8,
+         FRACTALKINE.CX3CL1_t79 = FRACTALKINE.CX3CL1...9,
+         GCSF.CSF3_t7 = GCSF.CSF3...10,
+         CSF2.GMCSF_t7 = CSF2.GMCSF...11,
+         GROA.KC.CXCL1_t7 = GROA.KC.CXCL1...12,
+         IFNA_t7 = IFNA...13,
+         IFNG_t7 = IFNG...14,
+         IL1A_t7 = IL1A...15,
+         IL1B_t7 = IL1B...16,
+         IL1RA_t7 = IL1RA...17,
+         IL2_t7 = IL2...18,
+         IL3_t7 = IL3...19,
+         IL4_t7 = IL4...20,
+         IL5_t7 = IL5...21,
+         IL6_t7 = IL6...22,
+         IL7_t7 = IL7...23,
+         IL8.CXCL8_t7 = IL8.CXCL8...24,
+         IL9_t7 = IL9...25,
+         IL10_t7 = IL10...26,
+         IL12P40_t7 = IL12P40...27,
+         IL12P70_t7 = IL12P70...28,
+         IL13_t7 = IL13...29,
+         IL15_t7 = IL15...30,
+         IL17A.CTLA8_t7 = IL17A.CTLA8...31,
+         IL18_t7 = IL18...34,
+         IL27_t7 = IL27...36,
+         IP.10.CXCL10_t7 = IP.10.CXCL10...37,
+         MCP1.CCL2_t7 = MCP1.CCL2...38,
+         MCP3.CCL7_t7 = MCP3.CCL7...39,
+         MIG.CXCL9_t7 = MIG.CXCL9...42,
+         MIP1A.CCL3_t7 = MIP1A.CCL3...43,
+         MIP1B.CCL4_t7 = MIP1B.CCL4...44,
+         PDGFAA_t7 = PDGFAA...45,
+        PDGF.AA.AB_t7 = PDGF.AA.AB...46,
+        RANTES.CCL5_t7 = RANTES.CCL5...47,
+        TGFA_t7 = TGFA...48,
+        TNFA_t7 = TNFA...49,
+        TNFB.LYMPHOTOXINA_t7 = TNFB.LYMPHOTOXINA...50,
+        VEGF_t7 = VEGF...51,
+        SCD40L_t7_normalized = SCD40L...60,
+       EGF_t7_normalized = EGF...61,
+       EOTAXIN.CCL11_t7_normalized = EOTAXIN.CCL11...62,
+      FGF2.FGFB_t7_normalized = FGF2.FGFB...63,
+      FLT3L_t7_normalized = FLT3L...64,
+      FRACTALKINE.CX3CL1_t7_normalized = FRACTALKINE.CX3CL1...65,
+      GCSF.CSF3_t7_normalized = GCSF.CSF3...66,
+      CSF2.GMCSF_t7_normalized = CSF2.GMCSF...67,
+      GROA.KC.CXCL1_t7_normalized = GROA.KC.CXCL1...68,
+      IFNA_t7_normalized = IFNA...69,
+      IFNG_t7_normalized = IFNG...70,
+      IL1A_t7_normalized = IL1A...71,
+      IL1B_t7_normalized = IL1B...72,
+      IL1RA_t7_normalized = IL1RA...73,
+      IL2_t7_normalized = IL2...74,
+      IL3_t7_normalized = IL3...75,
+      IL4_t7_normalized = IL4...76,
+      IL5_t7_normalized = IL5...77,
+      IL6_t7_normalized = IL6...78,
+      IL7_t7_normalized = IL7...79,
+      IL8.CXCL8_t7_normalized0 = IL8.CXCL8...80,
+      IL9_t7_normalized = IL9...81,
+      IL10_t7_normalized = IL10...82,
+      IL12P40_t7_normalized = IL12P40...83,
+      IL12P70_t7_normalized = IL12P70...84,
+      IL13_t7_normalized = IL13...85,
+     IL15_t7_normalized = IL15...86,
+     IL17A.CTLA8_t7_normalized = IL17A.CTLA8...87,
+     IL17E.IL25_t7_normalized = IL17E.IL25...88,
+     IL17F_t7_normalized = IL17F...89,
+     IL18_t7_normalized = IL18...90,
+     IL22_t7_normalized = IL22...91,
+     IL27_t7_normalized = IL27...92,
+     IP.10.CXCL10_t7_normalized = IP.10.CXCL10...93,
+     MCP1.CCL2_t7_normalized = MCP1.CCL2...94,
+     MCP3.CCL7_t7_normalized = MCP3.CCL7...95,
+     CSF1.MCFS_t7_normalized = CSF1.MCFS...96,
+     MDC.CCL22_t7_normalized = MDC.CCL22...97,
+     MIG.CXCL9_t7_normalized = MIG.CXCL9...98,
+     MIP1A.CCL3_t7_normalized = MIP1A.CCL3...99,
+     MIP1B.CCL4_t7_normalized = MIP1B.CCL4...100,
+     PDGFAA_t7_normalized = PDGFAA...101,
+     PDGF.AA.AB_t7_normalized = PDGF.AA.AB...102,
+     RANTES.CCL5_t7_normalized = RANTES.CCL5...103,
+     TGFA_t7_normalized = TGFA...104,
+    TNFA_t7_normalized = TNFA...105,
+    TNFB.LYMPHOTOXINA_t7_normalized = TNFB.LYMPHOTOXINA...106,
+    VEGF_t7_normalized = VEGF...107)
+
+
+h48_t8 <- h48_t8 %>% 
+  rename(plates_t8 = X.1...3,
+         SDCD40L_t8 = SCD40L...4,
+         EGF_t8 = EGF...5,
+         EOTAXIN.CCL11_t8 = EOTAXIN.CCL11...6,
+         FGF2.FGFB_t8 = FGF2.FGFB...7,
+         FLT3L_t8 = FLT3L...8,
+         FRACTALKINE.CX3CL1_t89 = FRACTALKINE.CX3CL1...9,
+         GCSF.CSF3_t8 = GCSF.CSF3...10,
+         CSF2.GMCSF_t8 = CSF2.GMCSF...11,
+         GROA.KC.CXCL1_t8 = GROA.KC.CXCL1...12,
+         IFNA_t8 = IFNA...13,
+         IFNG_t8 = IFNG...14,
+         IL1A_t8 = IL1A...15,
+         IL1B_t8 = IL1B...16,
+         IL1RA_t8 = IL1RA...17,
+         IL2_t8 = IL2...18,
+         IL3_t8 = IL3...19,
+         IL4_t8 = IL4...20,
+         IL5_t8 = IL5...21,
+         IL6_t8 = IL6...22,
+         IL7_t8 = IL7...23,
+         IL8.CXCL8_t8 = IL8.CXCL8...24,
+         IL9_t8 = IL9...25,
+         IL10_t8 = IL10...26,
+         IL12P40_t8 = IL12P40...27,
+         IL12P70_t8 = IL12P70...28,
+         IL13_t8 = IL13...29,
+         IL15_t8 = IL15...30,
+         IL17A.CTLA8_t8 = IL17A.CTLA8...31,
+         IL18_t8 = IL18...34,
+         IL27_t8 = IL27...36,
+         IP.10.CXCL10_t8 = IP.10.CXCL10...37,
+         MCP1.CCL2_t8 = MCP1.CCL2...38,
+         MCP3.CCL7_t8 = MCP3.CCL7...39,
+         MIG.CXCL9_t8 = MIG.CXCL9...42,
+         MIP1A.CCL3_t8 = MIP1A.CCL3...43,
+         MIP1B.CCL4_t8 = MIP1B.CCL4...44,
+         PDGFAA_t8 = PDGFAA...45,
+        PDGF.AA.AB_t8 = PDGF.AA.AB...46,
+        RANTES.CCL5_t8 = RANTES.CCL5...47,
+        TGFA_t8 = TGFA...48,
+        TNFA_t8 = TNFA...49,
+        TNFB.LYMPHOTOXINA_t8 = TNFB.LYMPHOTOXINA...50,
+        VEGF_t8 = VEGF...51,
+        SCD40L_t8_normalized = SCD40L...60,
+       EGF_t8_normalized = EGF...61,
+       EOTAXIN.CCL11_t8_normalized = EOTAXIN.CCL11...62,
+      FGF2.FGFB_t8_normalized = FGF2.FGFB...63,
+      FLT3L_t8_normalized = FLT3L...64,
+      FRACTALKINE.CX3CL1_t8_normalized = FRACTALKINE.CX3CL1...65,
+      GCSF.CSF3_t8_normalized = GCSF.CSF3...66,
+      CSF2.GMCSF_t8_normalized = CSF2.GMCSF...67,
+      GROA.KC.CXCL1_t8_normalized = GROA.KC.CXCL1...68,
+      IFNA_t8_normalized = IFNA...69,
+      IFNG_t8_normalized = IFNG...70,
+      IL1A_t8_normalized = IL1A...71,
+      IL1B_t8_normalized = IL1B...72,
+      IL1RA_t8_normalized = IL1RA...73,
+      IL2_t8_normalized = IL2...74,
+      IL3_t8_normalized = IL3...75,
+      IL4_t8_normalized = IL4...76,
+      IL5_t8_normalized = IL5...77,
+      IL6_t8_normalized = IL6...78,
+      IL7_t8_normalized = IL7...79,
+      IL8.CXCL8_t8_normalized0 = IL8.CXCL8...80,
+      IL9_t8_normalized = IL9...81,
+      IL10_t8_normalized = IL10...82,
+      IL12P40_t8_normalized = IL12P40...83,
+      IL12P70_t8_normalized = IL12P70...84,
+      IL13_t8_normalized = IL13...85,
+     IL15_t8_normalized = IL15...86,
+     IL17A.CTLA8_t8_normalized = IL17A.CTLA8...87,
+     IL17E.IL25_t8_normalized = IL17E.IL25...88,
+     IL17F_t8_normalized = IL17F...89,
+     IL18_t8_normalized = IL18...90,
+     IL22_t8_normalized = IL22...91,
+     IL27_t8_normalized = IL27...92,
+     IP.10.CXCL10_t8_normalized = IP.10.CXCL10...93,
+     MCP1.CCL2_t8_normalized = MCP1.CCL2...94,
+     MCP3.CCL7_t8_normalized = MCP3.CCL7...95,
+     CSF1.MCFS_t8_normalized = CSF1.MCFS...96,
+     MDC.CCL22_t8_normalized = MDC.CCL22...97,
+     MIG.CXCL9_t8_normalized = MIG.CXCL9...98,
+     MIP1A.CCL3_t8_normalized = MIP1A.CCL3...99,
+     MIP1B.CCL4_t8_normalized = MIP1B.CCL4...100,
+     PDGFAA_t8_normalized = PDGFAA...101,
+     PDGF.AA.AB_t8_normalized = PDGF.AA.AB...102,
+     RANTES.CCL5_t8_normalized = RANTES.CCL5...103,
+     TGFA_t8_normalized = TGFA...104,
+    TNFA_t8_normalized = TNFA...105,
+    TNFB.LYMPHOTOXINA_t8_normalized = TNFB.LYMPHOTOXINA...106,
+    VEGF_t8_normalized = VEGF...107)
+
+# CRP
+
+crp_t5 <- crp_t5 %>% 
+  rename(plate_t5 = X.1,
+         CHEX1_t5 = CHEX1,
+         CHEX2_t5 = CHEX2,
+         CHEX3_t5 = CHEX3,
+         CHEX4_t5 = CHEX4,
+         Plate.Number_t5 = Plate.Number,
+         CRP_difference_t5 = CRP_difference,
+         CRP_data_normalized_t5 = CRP_data_normalized)
+
+
+crp_t7 <- crp_t7 %>% 
+  rename(plate_t7 = X.1,
+         CHEX1_t7 = CHEX1,
+         CHEX2_t7 = CHEX2,
+         CHEX3_t7 = CHEX3,
+         CHEX4_t7 = CHEX4,
+         Plate.Number_t7 = Plate.Number,
+         CRP_difference_t7 = CRP_difference,
+         CRP_data_normalized_t7 = CRP_data_normalized)
+
+
+crp_t8 <- crp_t8 %>% 
+  rename(plate_t8 = X.1,
+         CHEX1_t8 = CHEX1,
+         CHEX2_t8 = CHEX2,
+         CHEX3_t8 = CHEX3,
+         CHEX4_t8 = CHEX4,
+         Plate.Number_t8 = Plate.Number,
+         CRP_difference_t8 = CRP_difference,
+         CRP_data_normalized_t8 = CRP_data_normalized)
+
+
+```
+
+
+# Merge individual timepoint dataframes wide by participant_id
+
+```{r}
+# H48
+
+h48_merged_t5_t7 <- full_join(h48_t5, h48_t7, by = "participant_id")
+
+h48_merged_full <- full_join(h48_merged_t5_t7, h48_t8, by = "participant_id")
+
+# CRP
+
+crp_merged_t5_t7 <- full_join(crp_t5, crp_t7, by = "participant_id")
+
+crp_merged_full <- full_join(crp_merged_t5_t7, crp_t8, by = "participant_id")
+
+
+```
+
+# Merge H48 and CRP together
+
+```{r}
+
+biomarkers_merged <- full_join(h48_merged_full, crp_merged_full, by = "participant_id")
+
+```
+
+
+
+
+```{r}
+
+write.csv(biomarkers_merged, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/ROTP_Biomarkers_Merged.csv")
+
+```
+
