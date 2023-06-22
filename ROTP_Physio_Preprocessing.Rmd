@@ -1,7 +1,7 @@
 ---
 title: "ROTP Merge and Deidentify"
-author: "Jesse Barrera"
-date: "2/22/23"
+author: "Jesse Barrera, Rachael Yielder, Zoe Huml"
+date: "6/2/23"
 output: html_document
 ---
 
@@ -14,6 +14,7 @@ library(dplyr)
 library(psych)
 library(lubridate)
 library(mice)
+library(tidyr)
 
 ```
 
@@ -23,19 +24,19 @@ library(mice)
 
 # Set working directory
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Physio")
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/Step 1 - Merge, Recode, Deidentify/Raw Data")
 
 # Import raw physio data
 
 prescreening_raw <- read.csv("ROTP_Physio_Prescreening_Raw.csv", na.strings = c("", " "))
 
-t1_raw <- read.csv("ROTP_Physio_T1_Raw.csv", na.strings = c("", " "))
+t1_raw <- read.csv("ROTP Physio T1 Raw.csv", na.strings = c("", " "))
 
-t2_raw <- read.csv("ROTP_Physio_T2_Raw.csv", na.strings = c("", " "))
+t2_raw <- read.csv("ROTP Physio T2 Raw.csv", na.strings = c("", " "))
 
-t3_raw <- read.csv("ROTP_Physio_T3_Raw.csv", na.strings = c("", " "))
+t3_raw <- read.csv("ROTP Physio T3 Raw.csv", na.strings = c("", " "))
 
-t4_raw <- read.csv("ROTP_Physio_T4_Raw.csv", na.strings = c("", " "))
+t4_raw <- read.csv("ROTP Physio T4 Raw.csv", na.strings = c("", " "))
 
 
 # Import participant ID key and change email column name to match raw datasets
@@ -46,9 +47,13 @@ id_key <- read.csv("ROTP_physio_id_key.csv")
 
 # Import list of participants who completed T1 blood sample
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses")
+t1_sample_completed <- read.csv("ROTP_physio_T1_completed_key.csv")
 
-t1_sample_completed <- read.csv("T1 Sample Completed.csv")
+# Import biomarker dataset to help with determining dropout time
+
+setwd("//Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Biomarkers")
+
+biomarkers <- read.csv("CRP_One_Sheet.csv")
 
 ```
 
@@ -246,10 +251,10 @@ t3_ineligible <- t3_raw %>%
            splenectomy != "2" |
            acute._infection != "2" |
            chronic_infection != "2" |
-           meds_general != "8" |
+           meds_general. != "8" |
            immunomodulators != "7" |
            monoclonals != "8" |
-           IVIG != "2"
+           IVIG. != "2"
            ) %>% 
   select(RecipientEmail)
 
@@ -262,10 +267,10 @@ t4_ineligible <- t4_raw %>%
            splenectomy != "2" |
            acute._infection != "2" |
            chronic_infection != "2" |
-           meds_general != "8" |
+           meds_general. != "8" |
            immunomodulators != "7" |
            monoclonals != "8" |
-           IVIG != "2"
+           IVIG. != "2"
            ) %>% 
   select(RecipientEmail)
 
@@ -397,21 +402,29 @@ t4_raw <- t4_raw %>%
 t2_raw <- t2_raw %>% 
   rename("Condition" = "FL_14_DO")
 
+#Test
+
 ```
 
 
-## Add timepoint indicator to column names
+## Edit variable names to prepare for merging timepoints
 
 ```{r}
 
 # T1
 
-colnames(t1_raw) <- paste(colnames(t1_raw), "t1", sep = "_") 
+colnames(t1_raw) <- gsub("_t1", "", colnames(t1_raw))
+
+colnames(t1_raw) <- paste(colnames(t1_raw), "t1", sep = "_")
 
 t1_raw <- t1_raw %>% 
   rename("RecipientEmail" = "RecipientEmail_t1")
 
 # T2
+
+colnames(t2_raw) <- gsub("_t1", "", colnames(t2_raw))
+
+colnames(t2_raw) <- gsub("_t2", "", colnames(t2_raw))
 
 colnames(t2_raw) <- paste(colnames(t2_raw), "t2", sep = "_") 
 
@@ -421,12 +434,16 @@ t2_raw <- t2_raw %>%
 
 # T3
 
+colnames(t3_raw) <- gsub("_t3", "", colnames(t3_raw))
+
 colnames(t3_raw) <- paste(colnames(t3_raw), "t3", sep = "_") 
 
 t3_raw <- t3_raw %>% 
   rename("RecipientEmail" = "RecipientEmail_t3")
 
 # T4
+
+colnames(t4_raw) <- gsub("_t4", "", colnames(t4_raw))
 
 colnames(t4_raw) <- paste(colnames(t4_raw), "t4", sep = "_") 
 
@@ -1531,6 +1548,17 @@ Write merged raw dataset to Box
 ```{r}
 
 write.csv(physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/ROTP_Physio_Summaries.csv")
+
+
+```
+
+Messing around with biomarkers dataset
+
+``` {r}
+
+biomarkers <- biomarkers %>% 
+  separate(X, into = c('participant_id', 'timepoint', "extra"), sep = c(3,4)) %>% 
+  select(-c("extra"))
 
 
 ```
