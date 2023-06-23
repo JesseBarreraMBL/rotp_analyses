@@ -30,13 +30,17 @@ setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROT
 
 prescreening_raw <- read.csv("ROTP_Physio_Prescreening_Raw.csv", na.strings = c("", " "))
 
-t1_raw <- read.csv("ROTP Physio T1 Raw.csv", na.strings = c("", " "))
+t1_raw <- read.csv("ROTP_Physio_T1_Raw.csv", na.strings = c("", " "))
 
-t2_raw <- read.csv("ROTP Physio T2 Raw.csv", na.strings = c("", " "))
+t2_raw <- read.csv("ROTP_Physio_T2_Raw.csv", na.strings = c("", " "))
 
-t3_raw <- read.csv("ROTP Physio T3 Raw.csv", na.strings = c("", " "))
+t3_raw <- read.csv("ROTP_Physio_T3_Raw.csv", na.strings = c("", " "))
 
-t4_raw <- read.csv("ROTP Physio T4 Raw.csv", na.strings = c("", " "))
+t4_raw <- read.csv("ROTP_Physio_T4_Raw.csv", na.strings = c("", " "))
+
+# Import list of participants who completed T1 blood sample
+
+t1_sample_completed <- read.csv("ROTP_Physio_T1_completed.csv")
 
 
 # Import participant ID key and change email column name to match raw datasets
@@ -45,9 +49,6 @@ setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID 
 
 id_key <- read.csv("ROTP_physio_id_key.csv") 
 
-# Import list of participants who completed T1 blood sample
-
-t1_sample_completed <- read.csv("ROTP_physio_T1_completed_key.csv")
 
 # Import biomarker dataset to help with determining dropout time
 
