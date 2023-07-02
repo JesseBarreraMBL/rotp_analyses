@@ -103,17 +103,28 @@ t4_raw <- t4_raw[-c(1,2), ]
 # Remove test participants
 
 # Remove participants who:
-## Have a status of "Survey Preview" or "Survey Test"
+## Don't have a status of "IP Address"
 ## Started before study was launched or after study closed
-## Do not have an email address attached to their response (this indicates they used Qualtrics preview feature)
 ## Have an email address corresponding with a member of the lab
 
+prescreening_raw <- prescreening_raw %>% 
+  arrange(ymd_hms(StartDate)) %>% 
+  filter(Status == "IP Address") %>% 
+  filter((ymd_hms(StartDate) >= ymd_hms("2022-10-10 13:30:00")) & 
+           (ymd_hms(StartDate) <= ymd_hms("2022-10-18 23:59:59"))) %>% 
+  filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
+                              "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
+                              "barreraj@stanford.edu", "klouis@stanford.edu", 
+                              "lstraube@stanford.edu", "jzielke@stanford.edu",
+                            "jbkaul@stanford.edu", "krise@stanford.edu"
+                            , "kconte@stanford.edu", "megan92@stanford.edu", 
+                              "kpags@stanford.edu")))
+
 t1_raw <- t1_raw %>% 
-  filter((Status != ("1")) & 
-           (Status != ("2"))) %>% 
+  arrange(mdy_hm(StartDate)) %>% 
+  filter(Status == "0") %>%  
   filter((mdy_hm(StartDate) >= mdy_hm("10/19/22 06:00")) & 
            (mdy_hm(StartDate) <= mdy_hm("10/24/22 23:59"))) %>% 
-  filter(!is.na(RecipientEmail)) %>% 
   filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
                               "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
                               "barreraj@stanford.edu", "klouis@stanford.edu", 
@@ -123,11 +134,9 @@ t1_raw <- t1_raw %>%
                               "kpags@stanford.edu")))
 
 t2_raw <- t2_raw %>% 
-  filter((Status != ("1")) & 
-           (Status != ("2"))) %>% 
+  filter(Status == "0") %>% 
   filter((mdy_hm(StartDate) >= mdy_hm("11/10/22 11:36")) & 
            (mdy_hm(StartDate) <= mdy_hm("11/17/22 23:59"))) %>% 
-    filter(!is.na(RecipientEmail)) %>% 
      filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
                               "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
                               "barreraj@stanford.edu", "klouis@stanford.edu", 
@@ -138,11 +147,9 @@ t2_raw <- t2_raw %>%
 
 
 t3_raw <- t3_raw %>% 
-    filter((Status != ("1")) & 
-           (Status != ("2"))) %>% 
+    filter(Status == "0")
   filter((mdy_hm(StartDate) >= mdy_hm("11/30/22 10:32")) & 
            (mdy_hm(StartDate) <= mdy_hm("12/05/22 23:59"))) %>% 
-    filter(!is.na(RecipientEmail)) %>% 
     filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
                               "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
                               "barreraj@stanford.edu", "klouis@stanford.edu", 
@@ -153,13 +160,10 @@ t3_raw <- t3_raw %>%
 
 
 
-
 t4_raw <- t4_raw %>% 
-    filter((Status != ("1")) & 
-           (Status != ("2"))) %>% 
+    filter(Status == "0") %>% 
   filter((mdy_hm(StartDate) >= mdy_hm("2/8/23 06:00")) & 
            (mdy_hm(StartDate) <= mdy_hm("2/17/23 23:59"))) %>% 
-    filter(!is.na(RecipientEmail)) %>% 
     filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
                               "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
                               "barreraj@stanford.edu", "klouis@stanford.edu", 
