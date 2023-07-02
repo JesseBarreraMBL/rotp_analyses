@@ -326,65 +326,6 @@ t4_raw <- t4_raw %>%
 
 ```
 
-## Calculate and visualize retention statistics
-
-```{r}
-
-# Make dataframe with Finished and Progress variables for all timepoints
-
-retention_physio_t1 <- t1_raw %>% 
-  mutate(RecipientEmail = t1_raw$RecipientEmail,
-         t1_finished = t1_raw$Finished,
-         t1_progress = t1_raw$Progress) %>% 
-  select(RecipientEmail, t1_finished, t1_progress)
-
-retention_physio_t2 <- t2_raw %>% 
-  mutate(RecipientEmail = t2_raw$RecipientEmail,
-         t2_finished = t2_raw$Finished,
-         t2_progress = t2_raw$Progress) %>% 
-  select(RecipientEmail, t2_finished, t2_progress, FL_14_DO)
-
-
-retention_physio_t3 <- t3_raw %>% 
-  mutate(RecipientEmail = t3_raw$RecipientEmail,
-         t3_finished = t3_raw$Finished,
-         t3_progress = t3_raw$Progress) %>% 
-  select(RecipientEmail, t3_finished, t3_progress)
-
-
-retention_physio_t4 <- t4_raw %>% 
-  mutate(RecipientEmail = t4_raw$RecipientEmail,
-         t4_finished = t4_raw$Finished,
-         t4_progress = t4_raw$Progress) %>% 
-  select(RecipientEmail, t4_finished, t4_progress)
-
-retention_physio_t1_t2 <- left_join(retention_physio_t1, retention_physio_t2, by = "RecipientEmail")
-
-retention_physio_t3_t4 <- left_join(retention_physio_t3, retention_physio_t4, by = "RecipientEmail")
-
-retention_physio_merged <- left_join(retention_physio_t1_t2, retention_physio_t3_t4, by = "RecipientEmail")
-
-# Visualize completion and progress for all timepoints
-
-## T1
-
-retention_t1_incomplete <- retention_physio_t1 %>% 
-  filter(t1_progress != "100")
-
-ggplot(retention_t1_incomplete, aes(x=as.numeric(t1_progress))) + 
- geom_histogram(colour="black", fill="white")
-
-# T2
-
-retention_t2_incomplete <- retention_physio_t2 %>% 
-  filter(t2_progress != "100")
-
-ggplot(retention_t2_incomplete, aes(x=as.numeric(t2_progress), fill = FL_14_DO)) + 
- geom_histogram(colour="black", binwidth = 5)
-
-```
-
-
 ## Did not complete T1 survey and T1 blood sample
 
 ```{r}
