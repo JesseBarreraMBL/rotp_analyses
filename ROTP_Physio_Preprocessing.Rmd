@@ -111,7 +111,7 @@ prescreening_raw <- prescreening_raw %>%
   arrange(ymd_hms(StartDate)) %>% 
   filter(Status == "IP Address") %>% 
   filter((ymd_hms(StartDate) >= ymd_hms("2022-10-10 13:30:00")) & 
-           (ymd_hms(StartDate) <= ymd_hms("2022-10-18 23:59:59"))) %>% 
+           (ymd_hms(StartDate) <= ymd_hms("2022-10-15 21:59:59"))) %>% 
   filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
                               "aliajcrum@gmail.com", "zoehuml1@gmail.com", 
                               "barreraj@stanford.edu", "klouis@stanford.edu", 
@@ -147,7 +147,7 @@ t2_raw <- t2_raw %>%
 
 
 t3_raw <- t3_raw %>% 
-    filter(Status == "0")
+    filter(Status == "0") %>% 
   filter((mdy_hm(StartDate) >= mdy_hm("11/30/22 10:32")) & 
            (mdy_hm(StartDate) <= mdy_hm("12/05/22 23:59"))) %>% 
     filter(!(RecipientEmail %in% c("zoehuml@stanford.edu", "crum@stanford.edu",  
@@ -176,9 +176,6 @@ t4_raw <- t4_raw %>%
 
 ```
 
-
-# Remove participants who don't meet inclusion criteria
-
 ## Does not meet medical eligibility criteria at prescreening (should already have
 been filtered out but just doublechecking)
 
@@ -186,7 +183,7 @@ been filtered out but just doublechecking)
 
 # Make list of participant emails who meet prescreening criteria
 
-prescreening_eligible <- prescreening_raw %>% 
+prescreening_eligible <- prescreening_raw %>%
   filter(physio_interested == "Yes" &
            physiology_opt == "Yes" &
            age == "Yes" &
@@ -201,14 +198,14 @@ prescreening_eligible <- prescreening_raw %>%
            immunomodulators == "I haven't taken any immunomodulators" &
            monoclonals == "I haven't had any monoclonal antibody therapies" &
            IVIG. == "No"
-           ) %>% 
+           ) %>%
   select(RecipientEmail)
 
 # Make list of participants who selected "Other (please elaborate)" for autoimmune
 # so we can evaluate whether they are actually eligible, then potentially subtract
 # the ineligible ones from prescreening_eligible
 
-prescreening_maybes <- prescreening_raw %>% 
+prescreening_maybes <- prescreening_raw %>%
   filter(physio_interested == "Yes" &
            physiology_opt == "Yes" &
            age == "Yes" &
@@ -223,26 +220,160 @@ prescreening_maybes <- prescreening_raw %>%
            immunomodulators == "I haven't taken any immunomodulators" &
            monoclonals == "I haven't had any monoclonal antibody therapies" &
            IVIG. == "No"
-           ) %>% 
+           ) %>%
   select(RecipientEmail, autoimmune_9_TEXT)
 
 # filter out participants who are in later timepoints but not prescreening_eligible
 # if any participants are filtered out evaluate on case by case basis
 
-t1_raw <- t1_raw %>% 
+t1_raw <- t1_raw %>%
   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
 
-t2_raw <- t2_raw %>% 
+t2_raw <- t2_raw %>%
   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
 
-t3_raw <- t3_raw %>% 
+t3_raw <- t3_raw %>%
   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
 
-t4_raw <- t4_raw %>% 
+t4_raw <- t4_raw %>%
   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
 
 ```
 
+## Did not consent to T1 survey
+
+```{r}
+
+t1_raw <- t1_raw %>% 
+  filter(consent_pt_1 == "9" & consent_pt_2 == "1")
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t3_raw <- t3_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t4_raw <- t4_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+
+```
+
+## Did not complete T1 survey
+
+```{r}
+
+t1_raw <- t1_raw %>% 
+  filter(Finished == "1")
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t3_raw <- t3_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t4_raw <- t4_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+```
+
+## Took less than 1/3 of median time to complete T1 survey
+
+```{r}
+
+t1_raw <- t1_raw %>% 
+  filter(as.numeric(Duration..in.seconds.) >= (median(as.numeric(t1_raw$Duration..in.seconds.))/3))
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t3_raw <- t3_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t4_raw <- t4_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+```
+
+
+## Did not complete T1 blood sample
+
+```{r}
+
+# make list of participants who completed T1 survey and sample
+
+t1_completed <- t1_raw %>% 
+  filter(RecipientEmail %in% t1_sample_completed$email) %>% 
+select(RecipientEmail) 
+
+# filter out participants who did not complete T1 survey and sample
+
+t1_raw <- t1_raw %>% 
+  filter((RecipientEmail %in% t1_completed$RecipientEmail) & 
+           (Finished == "1"))
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t3_raw <- t3_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+t4_raw <- t4_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+
+```
+
+
+## Participant was not successfully randomized
+
+```{r}
+
+# Make a list of participants who were successfully randomized
+
+t2_randomized <- t2_raw %>% 
+  filter(!(is.na(FL_14_DO))) 
+
+# Filter out participants who were not successfully randomized
+
+t1_raw <- t1_raw %>% 
+  filter(RecipientEmail %in% randomized$RecipientEmail)
+
+t2_raw <- t2_raw %>% 
+  filter(!(is.na(FL_14_DO))) %>% 
+  filter(RecipientEmail %in% randomized$RecipientEmail)
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% t2_raw$RecipientEmail)
+
+t2_raw <- t2_raw %>% 
+  filter(RecipientEmail %in% t2_raw$RecipientEmail)
+
+```
+
+## Calculate T2 retention statistics for CONSORT purposes
+
+```{r}
+
+# Make separate dataframes for each condition
+
+t2_intervention <- t2_randomized %>% 
+  filter(FL_14_DO == "Intervention")
+
+t2_control <- t2_randomized %>% 
+  filter(FL_14_DO == "Control")
+
+# Calculate total and by-condition completion rates for T2
+
+t2_completed <- t2_raw %>% 
+  filter(Finished == "1")
+
+t2_completed_int <- t2_completed %>% 
+  filter(FL_14_DO == "Intervention")
+
+t2_completed_con <- t2_completed %>% 
+  filter(FL_14_DO == "Control")
+
+```
 
 ## Does not meet medical eligibility criteria at T3 or T4 
 
@@ -339,100 +470,36 @@ t4_raw <- t4_raw %>%
 
 ```
 
-## Did not complete T1 survey and T1 blood sample
+## Calculate T3 retention statistics for CONSORT purposes
 
 ```{r}
+ 
+# Calculate total and by-condition completion rates for T3
 
-# make list of participants who completed T1 survey and sample
+t3_completed <- t3_raw %>% 
+  filter(Finished == "1")
 
-t1_completed <- t1_raw %>% 
-  filter(Finished == "1") %>% 
-  select(RecipientEmail) %>% 
-  filter(RecipientEmail %in% t1_sample_completed$email)
+t3_completed_int <- t3_completed %>% 
+  filter(RecipientEmail %in% t2_intervention$RecipientEmail)
 
-# filter out participants who did not complete T1 survey and sample
-
-t1_raw <- t1_raw %>% 
-  filter((RecipientEmail %in% t1_completed$RecipientEmail) & 
-           (Finished == "1"))
-
-t2_raw <- t2_raw %>% 
-  filter(RecipientEmail %in% t1_raw$RecipientEmail)
-
-t3_raw <- t3_raw %>% 
-  filter(RecipientEmail %in% t1_raw$RecipientEmail)
-
-t4_raw <- t4_raw %>% 
-  filter(RecipientEmail %in% t1_raw$RecipientEmail)
-
+t3_completed_con <- t3_completed %>% 
+  filter(RecipientEmail %in% t2_control$RecipientEmail)
 ```
 
-## Participant takes less than 1/3 of median time to complete T1 survey
+## Calculate T4 retention statistics for CONSORT purposes
 
 ```{r}
+ 
+# Calculate total and by-condition completion rates for T3
 
-t1_raw <- t1_raw %>% 
-  filter(as.numeric(Duration..in.seconds.) >= (median(as.numeric(t1_raw$Duration..in.seconds.))/3))
+t4_completed <- t4_raw %>% 
+  filter(Finished == "1")
 
-t2_raw <- t2_raw %>% 
-  filter(RecipientEmail %in% t1_raw$RecipientEmail)
+t4_completed_int <- t4_completed %>% 
+  filter(RecipientEmail %in% t2_intervention$RecipientEmail)
 
-t3_raw <- t3_raw %>% 
-  filter(RecipientEmail %in% t1_raw$RecipientEmail)
-
-t4_raw <- t4_raw %>% 
-  filter(RecipientEmail %in% t1_raw$RecipientEmail)
-
-```
-
-## Participant was not successfully randomized
-
-```{r}
-
-# Make a list of participants who were successfully randomized
-
-randomized <- t2_raw %>% 
-  filter(!(is.na(FL_14_DO))) %>% 
-  select(RecipientEmail)
-
-# Filter out participants who were not successfully randomized
-
-t1_raw <- t1_raw %>% 
-  filter(RecipientEmail %in% randomized$RecipientEmail)
-
-t2_raw <- t2_raw %>% 
-  filter(!(is.na(FL_14_DO))) %>% 
-  filter(RecipientEmail %in% randomized$RecipientEmail)
-
-t2_raw <- t2_raw %>% 
-  filter(RecipientEmail %in% t2_raw$RecipientEmail)
-
-t2_raw <- t2_raw %>% 
-  filter(RecipientEmail %in% t2_raw$RecipientEmail)
-
-```
-
-## Participant takes survey more than once 
-
-```{r}
-
-# Remove duplicate responses, keeping only the first response
-
-t1_raw <- t1_raw %>% 
-  arrange(StartDate) %>% 
-  distinct(RecipientEmail, .keep_all = TRUE)
-
-t2_raw <- t2_raw %>% 
-  arrange(StartDate) %>% 
-  distinct(RecipientEmail, .keep_all = TRUE)
-
-t3_raw <- t3_raw %>% 
-  arrange(StartDate) %>% 
-  distinct(RecipientEmail, .keep_all = TRUE)
-
-t4_raw <- t4_raw %>% 
-  arrange(StartDate) %>% 
-  distinct(RecipientEmail, .keep_all = TRUE)
+t4_completed_con <- t4_completed %>% 
+  filter(RecipientEmail %in% t2_control$RecipientEmail)
 
 ```
 
