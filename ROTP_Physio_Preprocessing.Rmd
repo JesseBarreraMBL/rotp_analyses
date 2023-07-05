@@ -176,71 +176,89 @@ t4_raw <- t4_raw %>%
 
 ```
 
-## Does not meet medical eligibility criteria at prescreening (should already have
-been filtered out but just doublechecking)
+# Remove ineligible participants
+
+## Prescreening
+
+<!-- ### Does not meet medical eligibility criteria -->
+
+<!-- ```{r} -->
+
+<!-- # Make list of participant emails who meet prescreening criteria -->
+
+<!-- prescreening_eligible <- prescreening_raw %>% -->
+<!--   filter(physio_interested == "Yes" & -->
+<!--            physiology_opt == "Yes" & -->
+<!--            age == "Yes" & -->
+<!--            HIV == "No" & -->
+<!--            heart_attack_stroke == "No" & -->
+<!--            cancer == "No" & -->
+<!--           autoimmune == "I don't have any autoimmune conditions" & -->
+<!--            splenectomy == "No" & -->
+<!--            acute._infection == "No" & -->
+<!--            chronic_infection == "No" & -->
+<!--            meds_general. == "I haven't taken any of these medication and/or treatments." & -->
+<!--            immunomodulators == "I haven't taken any immunomodulators" & -->
+<!--            monoclonals == "I haven't had any monoclonal antibody therapies" & -->
+<!--            IVIG. == "No" -->
+<!--            ) %>% -->
+<!--   select(RecipientEmail) -->
+
+<!-- # Make list of participants who selected "Other (please elaborate)" for autoimmune -->
+<!-- # so we can evaluate whether they are actually eligible, then potentially subtract -->
+<!-- # the ineligible ones from prescreening_eligible -->
+
+<!-- prescreening_maybes <- prescreening_raw %>% -->
+<!--   filter(physio_interested == "Yes" & -->
+<!--            physiology_opt == "Yes" & -->
+<!--            age == "Yes" & -->
+<!--            HIV == "No" & -->
+<!--            heart_attack_stroke == "No" & -->
+<!--            cancer == "No" & -->
+<!--            autoimmune == "Other (please elaborate)"& -->
+<!--            splenectomy == "No" & -->
+<!--            acute._infection == "No" & -->
+<!--            chronic_infection == "No" & -->
+<!--            meds_general. == "I haven't taken any of these medication and/or treatments." & -->
+<!--            immunomodulators == "I haven't taken any immunomodulators" & -->
+<!--            monoclonals == "I haven't had any monoclonal antibody therapies" & -->
+<!--            IVIG. == "No" -->
+<!--            ) %>% -->
+<!--   select(RecipientEmail, autoimmune_9_TEXT) -->
+
+<!-- # filter out participants who are in later timepoints but not prescreening_eligible -->
+<!-- # if any participants are filtered out evaluate on case by case basis -->
+
+<!-- t1_raw <- t1_raw %>% -->
+<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+
+<!-- t2_raw <- t2_raw %>% -->
+<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+
+<!-- t3_raw <- t3_raw %>% -->
+<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+
+<!-- t4_raw <- t4_raw %>% -->
+<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+
+<!-- ``` -->
+
+
+## T1
+
+### Remove T1 duplicate responses
 
 ```{r}
+# Remove duplicate responses, prioritizing a) the more complete response, and b) the first response
 
-# Make list of participant emails who meet prescreening criteria
+t1_raw <- t1_raw %>% 
+  arrange(desc(as.numeric(Progress)), mdy_hm(StartDate)) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE)
 
-prescreening_eligible <- prescreening_raw %>%
-  filter(physio_interested == "Yes" &
-           physiology_opt == "Yes" &
-           age == "Yes" &
-           HIV == "No" &
-           heart_attack_stroke == "No" &
-           cancer == "No" &
-          autoimmune == "I don't have any autoimmune conditions" &
-           splenectomy == "No" &
-           acute._infection == "No" &
-           chronic_infection == "No" &
-           meds_general. == "I haven't taken any of these medication and/or treatments." &
-           immunomodulators == "I haven't taken any immunomodulators" &
-           monoclonals == "I haven't had any monoclonal antibody therapies" &
-           IVIG. == "No"
-           ) %>%
-  select(RecipientEmail)
-
-# Make list of participants who selected "Other (please elaborate)" for autoimmune
-# so we can evaluate whether they are actually eligible, then potentially subtract
-# the ineligible ones from prescreening_eligible
-
-prescreening_maybes <- prescreening_raw %>%
-  filter(physio_interested == "Yes" &
-           physiology_opt == "Yes" &
-           age == "Yes" &
-           HIV == "No" &
-           heart_attack_stroke == "No" &
-           cancer == "No" &
-           autoimmune == "Other (please elaborate)"&
-           splenectomy == "No" &
-           acute._infection == "No" &
-           chronic_infection == "No" &
-           meds_general. == "I haven't taken any of these medication and/or treatments." &
-           immunomodulators == "I haven't taken any immunomodulators" &
-           monoclonals == "I haven't had any monoclonal antibody therapies" &
-           IVIG. == "No"
-           ) %>%
-  select(RecipientEmail, autoimmune_9_TEXT)
-
-# filter out participants who are in later timepoints but not prescreening_eligible
-# if any participants are filtered out evaluate on case by case basis
-
-t1_raw <- t1_raw %>%
-  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
-
-t2_raw <- t2_raw %>%
-  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
-
-t3_raw <- t3_raw %>%
-  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
-
-t4_raw <- t4_raw %>%
-  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
 
 ```
 
-## Did not consent to T1 survey
+### Did not consent to T1 survey
 
 ```{r}
 
@@ -259,7 +277,7 @@ t4_raw <- t4_raw %>%
 
 ```
 
-## Did not complete T1 survey
+### Did not complete T1 survey
 
 ```{r}
 
@@ -277,7 +295,7 @@ t4_raw <- t4_raw %>%
 
 ```
 
-## Took less than 1/3 of median time to complete T1 survey
+### Took less than 1/3 of median time to complete T1 survey
 
 ```{r}
 
@@ -296,7 +314,7 @@ t4_raw <- t4_raw %>%
 ```
 
 
-## Did not complete T1 blood sample
+### Did not complete T1 blood sample
 
 ```{r}
 
@@ -322,9 +340,20 @@ t4_raw <- t4_raw %>%
   filter(RecipientEmail %in% t1_raw$RecipientEmail)
 
 ```
+## T2
+
+### Remove T2 duplicates
+
+```{r}
+
+t2_raw <- t2_raw %>% 
+  arrange(desc(as.numeric(Progress)), mdy_hm(StartDate)) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE)
+
+```
 
 
-## Participant was not successfully randomized
+### Participant was not successfully randomized
 
 ```{r}
 
@@ -336,21 +365,21 @@ t2_randomized <- t2_raw %>%
 # Filter out participants who were not successfully randomized
 
 t1_raw <- t1_raw %>% 
-  filter(RecipientEmail %in% randomized$RecipientEmail)
+  filter(RecipientEmail %in% t2_randomized$RecipientEmail)
 
 t2_raw <- t2_raw %>% 
   filter(!(is.na(FL_14_DO))) %>% 
-  filter(RecipientEmail %in% randomized$RecipientEmail)
+  filter(RecipientEmail %in% t2_randomized$RecipientEmail)
 
-t2_raw <- t2_raw %>% 
+t3_raw <- t3_raw %>% 
   filter(RecipientEmail %in% t2_raw$RecipientEmail)
 
-t2_raw <- t2_raw %>% 
+t4_raw <- t4_raw %>% 
   filter(RecipientEmail %in% t2_raw$RecipientEmail)
 
 ```
 
-## Calculate T2 retention statistics for CONSORT purposes
+### Calculate T2 retention statistics for CONSORT purposes
 
 ```{r}
 
@@ -375,102 +404,115 @@ t2_completed_con <- t2_completed %>%
 
 ```
 
-## Does not meet medical eligibility criteria at T3 or T4 
+<!-- ## T3/T4 -->
+
+<!-- ### Does not meet medical eligibility criteria at T3 -->
+
+<!-- ```{r} -->
+
+<!-- # filter out participants who do not meet medical eligibility criteria as measured at T3  -->
+<!-- # or T4 -->
+
+<!-- # Make a list of participants who do not meet eligiblity criteria at T3/T4 -->
+
+<!-- # Review with Lexi -->
+
+
+<!-- t3_ineligible <- t3_raw %>%  -->
+<!--   filter(age != "1" | -->
+<!--            HIV != "2" | -->
+<!--            heart_attack_stroke != "2" | -->
+<!--            cancer != "2" | -->
+<!--            autoimmune != "10" | -->
+<!--            splenectomy != "2" | -->
+<!--            acute._infection != "2" | -->
+<!--            chronic_infection != "2" | -->
+<!--            meds_general != "8" | -->
+<!--            immunomodulators != "7" | -->
+<!--            monoclonals != "8" | -->
+<!--            IVIG != "2" -->
+<!--            ) %>%  -->
+<!--   select(RecipientEmail) -->
+
+<!-- t3_maybes <- t3_raw %>%  -->
+<!--   filter(age == "1" & -->
+<!--            HIV == "2" & -->
+<!--            heart_attack_stroke == "2" & -->
+<!--            cancer == "2" & -->
+<!--            autoimmune == "9" & -->
+<!--            splenectomy == "2" & -->
+<!--            acute._infection == "2" & -->
+<!--            chronic_infection == "2" & -->
+<!--            meds_general == "8" & -->
+<!--            immunomodulators == "7" & -->
+<!--            monoclonals == "8" & -->
+<!--            IVIG == "2" -->
+<!--            ) %>%  -->
+<!--   select(RecipientEmail, autoimmune_9_TEXT) -->
+
+<!-- t4_ineligible <- t4_raw %>%  -->
+<!--    filter(age != "1" | -->
+<!--            HIV != "2" | -->
+<!--            heart_attack_stroke != "2" | -->
+<!--            cancer != "2" | -->
+<!--            autoimmune != "10" | -->
+<!--            splenectomy != "2" | -->
+<!--            acute._infection != "2" | -->
+<!--            chronic_infection != "2" | -->
+<!--            meds_general != "8" | -->
+<!--            immunomodulators != "7" | -->
+<!--            monoclonals != "8" | -->
+<!--            IVIG != "2" -->
+<!--            ) %>%  -->
+<!--   select(RecipientEmail) -->
+
+<!-- t4_maybes <- t4_raw %>%  -->
+<!--   filter(age == "1" & -->
+<!--            HIV == "2" & -->
+<!--            heart_attack_stroke == "2" & -->
+<!--            cancer == "2" & -->
+<!--            autoimmune == "9" & -->
+<!--            splenectomy == "2" & -->
+<!--            acute._infection == "2" & -->
+<!--            chronic_infection == "2" & -->
+<!--            meds_general == "8" & -->
+<!--            immunomodulators == "7" & -->
+<!--            monoclonals == "8" & -->
+<!--            IVIG == "2" -->
+<!--            ) %>%  -->
+<!--   select(RecipientEmail, autoimmune_9_TEXT) -->
+
+<!-- t3_t4_ineligible <- bind_rows(t3_ineligible, t4_ineligible) -->
+
+
+<!-- # Filter out participants who don't meet medical eligiblity at T3/T4 -->
+
+<!-- t1_raw <- t1_raw %>%  -->
+<!--   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail)) -->
+
+<!-- t2_raw <- t2_raw %>%  -->
+<!--    filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail)) -->
+
+<!-- t3_raw <- t3_raw %>%  -->
+<!--    filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail)) -->
+
+<!-- t4_raw <- t4_raw %>%  -->
+<!--    filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail)) -->
+
+<!-- ``` -->
+
+### Remove T3 duplicates
 
 ```{r}
 
-# filter out participants who do not meet medical eligibility criteria as measured at T3 
-# or T4
-
-# Make a list of participants who do not meet eligiblity criteria at T3/T4
-
-# Review with Lexi
-
-
-t3_ineligible <- t3_raw %>% 
-  filter(age != "1" |
-           HIV != "2" |
-           heart_attack_stroke != "2" |
-           cancer != "2" |
-           autoimmune != "10" |
-           splenectomy != "2" |
-           acute._infection != "2" |
-           chronic_infection != "2" |
-           meds_general != "8" |
-           immunomodulators != "7" |
-           monoclonals != "8" |
-           IVIG != "2"
-           ) %>% 
-  select(RecipientEmail)
-
-t3_maybes <- t3_raw %>% 
-  filter(age == "1" &
-           HIV == "2" &
-           heart_attack_stroke == "2" &
-           cancer == "2" &
-           autoimmune == "9" &
-           splenectomy == "2" &
-           acute._infection == "2" &
-           chronic_infection == "2" &
-           meds_general == "8" &
-           immunomodulators == "7" &
-           monoclonals == "8" &
-           IVIG == "2"
-           ) %>% 
-  select(RecipientEmail, autoimmune_9_TEXT)
-
-t4_ineligible <- t4_raw %>% 
-   filter(age != "1" |
-           HIV != "2" |
-           heart_attack_stroke != "2" |
-           cancer != "2" |
-           autoimmune != "10" |
-           splenectomy != "2" |
-           acute._infection != "2" |
-           chronic_infection != "2" |
-           meds_general != "8" |
-           immunomodulators != "7" |
-           monoclonals != "8" |
-           IVIG != "2"
-           ) %>% 
-  select(RecipientEmail)
-
-t4_maybes <- t4_raw %>% 
-  filter(age == "1" &
-           HIV == "2" &
-           heart_attack_stroke == "2" &
-           cancer == "2" &
-           autoimmune == "9" &
-           splenectomy == "2" &
-           acute._infection == "2" &
-           chronic_infection == "2" &
-           meds_general == "8" &
-           immunomodulators == "7" &
-           monoclonals == "8" &
-           IVIG == "2"
-           ) %>% 
-  select(RecipientEmail, autoimmune_9_TEXT)
-
-t3_t4_ineligible <- bind_rows(t3_ineligible, t4_ineligible)
-
-
-# Filter out participants who don't meet medical eligiblity at T3/T4
-
-t1_raw <- t1_raw %>% 
-  filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
-
-t2_raw <- t2_raw %>% 
-   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
-
 t3_raw <- t3_raw %>% 
-   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
-
-t4_raw <- t4_raw %>% 
-   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+  arrange(desc(as.numeric(Progress)), mdy_hm(StartDate)) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE)
 
 ```
 
-## Calculate T3 retention statistics for CONSORT purposes
+
+### Calculate T3 retention statistics for CONSORT purposes
 
 ```{r}
  
@@ -486,7 +528,18 @@ t3_completed_con <- t3_completed %>%
   filter(RecipientEmail %in% t2_control$RecipientEmail)
 ```
 
-## Calculate T4 retention statistics for CONSORT purposes
+### Remove T4 duplicates
+
+```{r}
+
+t4_raw <- t4_raw %>% 
+  arrange(desc(as.numeric(Progress)), mdy_hm(StartDate)) %>% 
+  distinct()
+
+```
+
+
+### Calculate T4 retention statistics for CONSORT purposes
 
 ```{r}
  
