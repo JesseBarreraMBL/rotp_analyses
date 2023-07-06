@@ -376,6 +376,21 @@ t4_completed_int <- t4_completed_non_physio %>%
 
 t4_completed_con <- t4_completed_non_physio %>% 
   filter(RecipientEmail %in% randomized_con$RecipientEmail)
+
+```
+
+# Calculate demographic x retention statistics for meeting on 7/6
+
+```{r}
+
+# T1
+
+## Breakdown by race
+
+t1_non_physio_race <- t1_raw_non_physio %>% 
+  select(rac)
+
+
 ```
 
 
@@ -397,7 +412,6 @@ t2_raw_non_physio_con <- t2_raw_non_physio_con %>%
   mutate(Condition = "Control")
 
 ```
-
 
 
 ## Add timepoint indicator to column names
@@ -582,7 +596,6 @@ non_physio_merged_raw <- non_physio_merged_raw %>%
          )
 
 ```
-
 
 # Calculate summary scores
 
