@@ -287,24 +287,42 @@ t2_raw_non_physio_con <- t2_raw_non_physio_con %>%
 
 # Make a list of all participants who were successfully randomized
 
+## Add condition variable to T2 dataframes
+
+t2_raw_non_physio_int <- t2_raw_non_physio_int %>% 
+  mutate(Condition = "Intervention")
+
+t2_raw_non_physio_con <- t2_raw_non_physio_con %>% 
+  mutate(Condition = "Control")
+
+# Remove participants who may accidentally have been 
+
+t2_raw_non_physio <- bind_rows(t2_raw_non_physio_int, t2_raw_non_physio_con) %>% 
+  arrange(mdy_hm(StartDate)) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE) %>% 
+  
+
 randomized_int <- t2_raw_non_physio_int %>% 
-  select(RecipientEmail)
+  select(RecipientEmail, StartDate) %>% 
+  mutate(c)
 
 randomized_con <- t2_raw_non_physio_con %>% 
-  select(RecipientEmail)
+  select(RecipientEmail, StartDate)
 
-randomized <- bind_rows(randomized_int, randomized_con)
+t2_raw_non_physio <- bind_rows(randomized_int, randomized_con) %>% 
+  arrange(mdy_hm(StartDate)) %>% 
+  distinct(RecipientEmail, .keep_all = TRUE)
 
 # Filter out participants who were not successfully randomized
 
 t1_raw_non_physio <- t1_raw_non_physio %>% 
-  filter(RecipientEmail %in% randomized$RecipientEmail)
+  filter(RecipientEmail %in% t2_raw_non_physio$RecipientEmail)
 
 t3_raw_non_physio <- t3_raw_non_physio %>% 
-  filter(RecipientEmail %in% randomized$RecipientEmail)
+  filter(RecipientEmail %in% t2_raw_non_physio$RecipientEmail)
 
 t4_raw_non_physio <- t4_raw_non_physio %>% 
-  filter(RecipientEmail %in% randomized$RecipientEmail)
+  filter(RecipientEmail %in% t2_raw_non_physio$RecipientEmail)
 
 ```
 
@@ -379,21 +397,6 @@ t4_completed_con <- t4_completed_non_physio %>%
 
 ```
 
-# Calculate demographic x retention statistics for meeting on 7/6
-
-```{r}
-
-# T1
-
-## Breakdown by race
-
-t1_non_physio_race <- t1_raw_non_physio %>% 
-  select(rac)
-
-
-```
-
-
 
 # Merge Data
 
@@ -457,7 +460,7 @@ t4_raw_non_physio <- t4_raw_non_physio %>%
 ```
 
 
-## Merge data in wide format using left_joins
+## Merge timepoints into single wide dataframe
 
 ```{r}
 
@@ -465,9 +468,14 @@ t4_raw_non_physio <- t4_raw_non_physio %>%
 
 t2_raw_non_physio <- bind_rows(t2_raw_non_physio_int, t2_raw_non_physio_con)
 
-# Merge T1 and T2 dataframes using left_join
+t2_merged_duplicates <- t2_raw_non_physio$RecipientEmail[duplicated(t2_raw_non_physio$RecipientEmail)]
+
+# Merge T1 and T2 dataframes using left_join (retains all rows in T1 and matching rows in T2)
 
 t1_t2_non_physio <- left_join(t1_raw_non_physio, t2_raw_non_physio, by = "RecipientEmail")
+
+t1_t2_test <- duplicated(t1_t2_non_physio$RecipientEmail)
+
 
 # Merge T3 and T4 dataframes using left_join
 
