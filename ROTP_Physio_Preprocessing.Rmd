@@ -180,68 +180,71 @@ t4_raw <- t4_raw %>%
 
 ## Prescreening
 
-<!-- ### Does not meet medical eligibility criteria -->
+### Does not meet medical eligibility criteria
 
-<!-- ```{r} -->
+```{r}
 
-<!-- # Make list of participant emails who meet prescreening criteria -->
+# Make list of participant emails who meet prescreening criteria
 
-<!-- prescreening_eligible <- prescreening_raw %>% -->
-<!--   filter(physio_interested == "Yes" & -->
-<!--            physiology_opt == "Yes" & -->
-<!--            age == "Yes" & -->
-<!--            HIV == "No" & -->
-<!--            heart_attack_stroke == "No" & -->
-<!--            cancer == "No" & -->
-<!--           autoimmune == "I don't have any autoimmune conditions" & -->
-<!--            splenectomy == "No" & -->
-<!--            acute._infection == "No" & -->
-<!--            chronic_infection == "No" & -->
-<!--            meds_general. == "I haven't taken any of these medication and/or treatments." & -->
-<!--            immunomodulators == "I haven't taken any immunomodulators" & -->
-<!--            monoclonals == "I haven't had any monoclonal antibody therapies" & -->
-<!--            IVIG. == "No" -->
-<!--            ) %>% -->
-<!--   select(RecipientEmail) -->
+prescreening_eligible <- prescreening_raw %>%
+  filter(physio_interested == "Yes" &
+           physiology_opt == "Yes" &
+           age == "Yes" &
+           HIV == "No" &
+           heart_attack_stroke == "No" &
+           cancer == "No" &
+          autoimmune == "I don't have any autoimmune conditions" &
+           splenectomy == "No" &
+           acute._infection == "No" &
+           chronic_infection == "No" &
+           meds_general. == "I haven't taken any of these medication and/or treatments." &
+           immunomodulators == "I haven't taken any immunomodulators" &
+           monoclonals == "I haven't had any monoclonal antibody therapies" &
+           IVIG. == "No"
+           ) %>%
+  select(RecipientEmail)
 
-<!-- # Make list of participants who selected "Other (please elaborate)" for autoimmune -->
-<!-- # so we can evaluate whether they are actually eligible, then potentially subtract -->
-<!-- # the ineligible ones from prescreening_eligible -->
+# Make list of participants who selected "Other (please elaborate)" for autoimmune
+# so we can evaluate whether they are actually eligible, then potentially subtract
+# the ineligible ones from prescreening_eligible
 
-<!-- prescreening_maybes <- prescreening_raw %>% -->
-<!--   filter(physio_interested == "Yes" & -->
-<!--            physiology_opt == "Yes" & -->
-<!--            age == "Yes" & -->
-<!--            HIV == "No" & -->
-<!--            heart_attack_stroke == "No" & -->
-<!--            cancer == "No" & -->
-<!--            autoimmune == "Other (please elaborate)"& -->
-<!--            splenectomy == "No" & -->
-<!--            acute._infection == "No" & -->
-<!--            chronic_infection == "No" & -->
-<!--            meds_general. == "I haven't taken any of these medication and/or treatments." & -->
-<!--            immunomodulators == "I haven't taken any immunomodulators" & -->
-<!--            monoclonals == "I haven't had any monoclonal antibody therapies" & -->
-<!--            IVIG. == "No" -->
-<!--            ) %>% -->
-<!--   select(RecipientEmail, autoimmune_9_TEXT) -->
+prescreening_maybes <- prescreening_raw %>%
+  filter(physio_interested == "Yes" &
+           physiology_opt == "Yes" &
+           age == "Yes" &
+           HIV == "No" &
+           heart_attack_stroke == "No" &
+           cancer == "No" &
+           autoimmune == "Other (please elaborate)"&
+           splenectomy == "No" &
+           acute._infection == "No" &
+           chronic_infection == "No" &
+           meds_general. == "I haven't taken any of these medication and/or treatments." &
+           immunomodulators == "I haven't taken any immunomodulators" &
+           monoclonals == "I haven't had any monoclonal antibody therapies" &
+           IVIG. == "No"
+           ) %>%
+  select(RecipientEmail, autoimmune_9_TEXT)
 
-<!-- # filter out participants who are in later timepoints but not prescreening_eligible -->
-<!-- # if any participants are filtered out evaluate on case by case basis -->
+prescreening_maybes_included <- prescreening_maybes %>% 
+  filter(prescreening_maybes$RecipientEmail %in% t1_raw$RecipientEmail)
 
-<!-- t1_raw <- t1_raw %>% -->
-<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+# filter out participants who are in later timepoints but not prescreening_eligible
+# if any participants are filtered out evaluate on case by case basis
 
-<!-- t2_raw <- t2_raw %>% -->
-<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+t1_raw <- t1_raw %>%
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
 
-<!-- t3_raw <- t3_raw %>% -->
-<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+t2_raw <- t2_raw %>%
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
 
-<!-- t4_raw <- t4_raw %>% -->
-<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+t3_raw <- t3_raw %>%
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
 
-<!-- ``` -->
+t4_raw <- t4_raw %>%
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+```
 
 
 ## T1
@@ -616,7 +619,7 @@ t4_raw <- t4_raw %>%
 
 ```
 
-## Merge data in wide format using left_joins
+## Merge data in wide format 
 
 ```{r}
 
@@ -626,7 +629,7 @@ t1_t2_physio <- left_join(t1_raw, t2_raw, by = "RecipientEmail")
 
 # Merge T3 and T4 dataframes using left_join
 
-t3_t4_physio <- left_join(t3_raw, t4_raw, by = "RecipientEmail")
+t3_t4_physio <- outer_join(t3_raw, t4_raw, by = "RecipientEmail")
 
 # Merge all four timpeoints into a single dataframe
 
