@@ -24,24 +24,24 @@ library(tidyr)
 
 # Set working directory
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/Step 1 - Merge, Recode, Deidentify/Raw Data")
+setwd("/Users/rachaelyielder/Library/CloudStorage/Box-Box/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/Raw Data")
 
 # Import raw physio data
 
 prescreening_raw <- read.csv("ROTP_Physio_Prescreening_Raw.csv", na.strings = c("", " "))
 
-t1_raw <- read.csv("ROTP Physio T1 Raw.csv", na.strings = c("", " "))
+t1_raw <- read.csv("ROTP_Physio_T1_Raw.csv", na.strings = c("", " "))
 
-t2_raw <- read.csv("ROTP Physio T2 Raw.csv", na.strings = c("", " "))
+t2_raw <- read.csv("ROTP_Physio_T2_Raw.csv", na.strings = c("", " "))
 
-t3_raw <- read.csv("ROTP Physio T3 Raw.csv", na.strings = c("", " "))
+t3_raw <- read.csv("ROTP_Physio_T3_Raw.csv", na.strings = c("", " "))
 
-t4_raw <- read.csv("ROTP Physio T4 Raw.csv", na.strings = c("", " "))
+t4_raw <- read.csv("ROTP_Physio_T4_Raw.csv", na.strings = c("", " "))
 
 
 # Import participant ID key and change email column name to match raw datasets
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys")
+setwd("/Users/rachaelyielder/Library/CloudStorage/Box-Box/COVID Intervention + Physio/Analyses/ID Keys")
 
 id_key <- read.csv("ROTP_physio_id_key.csv") 
 
@@ -51,7 +51,7 @@ t1_sample_completed <- read.csv("ROTP_physio_T1_completed_key.csv")
 
 # Import biomarker dataset to help with determining dropout time
 
-setwd("//Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Biomarkers")
+setwd("/Users/rachaelyielder/Library/CloudStorage/Box-Box/COVID Intervention + Physio/Analyses/Raw Data - Biomarkers")
 
 biomarkers <- read.csv("CRP_One_Sheet.csv")
 
@@ -251,10 +251,10 @@ t3_ineligible <- t3_raw %>%
            splenectomy != "2" |
            acute._infection != "2" |
            chronic_infection != "2" |
-           meds_general. != "8" |
+           meds_general != "8" |
            immunomodulators != "7" |
            monoclonals != "8" |
-           IVIG. != "2"
+           IVIG != "2"
            ) %>% 
   select(RecipientEmail)
 
@@ -267,10 +267,10 @@ t4_ineligible <- t4_raw %>%
            splenectomy != "2" |
            acute._infection != "2" |
            chronic_infection != "2" |
-           meds_general. != "8" |
+           meds_general != "8" |
            immunomodulators != "7" |
            monoclonals != "8" |
-           IVIG. != "2"
+           IVIG != "2"
            ) %>% 
   select(RecipientEmail)
 
@@ -502,7 +502,7 @@ physio_merged_raw <- physio_merged_raw %>%
                 "Duration..in.seconds._t3",
                 "Finished_t3",
                 "age_t3":"autoimmune_t3",
-                "splenectomy_t3":"IVIG._t3",
+                "splenectomy_t3":"IVIG_t3",
                 "COVID.Status_t3":"autoimmune_t4",
                 "splenectomy_t4":"prh_routine_t1_t4",
                 "prh_income_t1_t4",
@@ -602,11 +602,61 @@ physio_merged_raw <- physio_merged_raw %>%
           "cov_sym_t8_physio" = "COVID.Symptoms_t8_physio",
          "cov_sym_free_t8_physio" = "COVID.Symptoms_29_TEXT_t8_physio",
          "cov_status_t8_physio" = "COVID.Status_t8_physio",
-         "cov_vax_stat_t8_physio" = "COVID.Vaccine.Statu._t8_physio",
+         "cov_vax_stat_t8_physio" = "COVID.Vaccine.Statu_t8_physio",
          "seh_3_1_x_t8_physio" = "she_3_1_x_t8_physio",
          "seh_3_1_y_t8_physio" = "she_3_1_y_t8_physio",
          "seh_3_t8_physio" = "she_3_t8_physio"
           )
+
+```
+
+# Create retention variable
+
+```{r}
+
+# Change all Finished_tX_physio to factor variables:
+
+## T5
+physio_merged_raw$Finished_t5_physio <- as.factor(physio_merged_raw$Finished_t5_physio)
+
+## T6
+physio_merged_raw$Finished_t6_physio <- as.factor(physio_merged_raw$Finished_t6_physio)
+
+## T7
+physio_merged_raw$Finished_t7_physio <- as.factor(physio_merged_raw$Finished_t7_physio)
+
+## T8
+physio_merged_raw$Finished_t8_physio <- as.factor(physio_merged_raw$Finished_t8_physio)
+
+
+
+# Replace NA with '0' for all Finished_tX_physio variables:
+
+## T5 - Not needed (all participants completed T5 survey)
+
+## T6
+physio_merged_raw$Finished_t6_physio[is.na(physio_merged_raw$Finished_t6_physio)] <- 0
+
+## T7
+physio_merged_raw$Finished_t7_physio[is.na(physio_merged_raw$Finished_t7_physio)] <- 0
+
+## T8
+physio_merged_raw$Finished_t8_physio[is.na(physio_merged_raw$Finished_t8_physio)] <- 0
+
+
+
+# Create a retention variable of progression through study surveys. Showing when participants were lost to follow-up, and when participants did not complete (DNC) a timepoint but did return to the study for a later timepoint.
+## Note: T5 not included as all participants completed T5 survey.
+
+physio_merged_raw <- physio_merged_raw %>%
+mutate(participant_retention_physio = case_when(Finished_t8_physio == '1' & Finished_t7_physio == '1' &    Finished_t6_physio == '1'  ~ "7", #Completed ALL timepoints
+                                                    Finished_t8_physio == '0' & Finished_t7_physio == '1' & Finished_t6_physio == '0' ~ "6", #DNC T6, returned for T7, lost at T8
+                                                    Finished_t8_physio == '1' & Finished_t7_physio == '0' & Finished_t6_physio == '1' ~ "5", #DNC T7, returned for T8
+                                                    Finished_t8_physio == '1' & Finished_t7_physio == '0' & Finished_t6_physio == '0' ~ "4", #DNC T6 or T7, returned for T8
+                                                    Finished_t8_physio == '1' & Finished_t7_physio == '1' & Finished_t6_physio == '0' ~ "3", #DNC T6, returned for T7 & T8
+                                                    Finished_t8_physio == '0' & Finished_t7_physio == '1' & Finished_t6_physio == '1' ~ "2", #Lost at T8
+                                                    Finished_t8_physio == '0' & Finished_t7_physio == '0' & Finished_t6_physio == '1' ~ "1", #Lost at T7
+                                                    Finished_t8_physio == '0' & Finished_t7_physio == '0' & Finished_t6_physio == '0' ~ "0" )) #Lost at T6
 
 ```
 

@@ -23,7 +23,7 @@ library(mice)
 
 # Set working directory
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Non-Physio")
+setwd("/Users/rachaelyielder/Library/CloudStorage/Box-Box/COVID Intervention + Physio/Analyses/ROTP Non-Physio Preprocessing/Step 1 - Merge, Recode, Deidentify/Raw Data - Non-Physio")
 
 # Import raw non-physio data
 
@@ -504,6 +504,54 @@ non_physio_merged_raw <- non_physio_merged_raw %>%
 
 ```
 
+# Create retention variable
+
+```{r}
+# Change all Finished_tX_non_physio to factor variables:
+
+## T5
+non_physio_merged_raw$Finished_t5_non_physio <- as.factor(non_physio_merged_raw$Finished_t5_non_physio)
+
+## T6
+non_physio_merged_raw$Finished_t6_non_physio <- as.factor(non_physio_merged_raw$Finished_t6_non_physio)
+
+## T7
+non_physio_merged_raw$Finished_t7_non_physio <- as.factor(non_physio_merged_raw$Finished_t7_non_physio)
+
+## T8
+non_physio_merged_raw$Finished_t8_non_physio <- as.factor(non_physio_merged_raw$Finished_t8_non_physio)
+
+
+
+# Replace NA with '0' for all Finished_tX_non_physio variables:
+
+## T5 - Not needed (all participants completed T5 survey)
+
+## T6
+non_physio_merged_raw$Finished_t6_non_physio[is.na(non_physio_merged_raw$Finished_t6_non_physio)] <- 0
+
+## T7
+non_physio_merged_raw$Finished_t7_non_physio[is.na(non_physio_merged_raw$Finished_t7_non_physio)] <- 0
+
+## T8
+non_physio_merged_raw$Finished_t8_non_physio[is.na(non_physio_merged_raw$Finished_t8_non_physio)] <- 0
+
+
+
+# Create a retention variable of progression through study surveys. Showing when participants were lost to follow-up, and when participants did not complete (DNC) a timepoint but did return to the study for a later timepoint.
+## Note: T5 not included as all participants completed T5 survey.
+
+non_physio_merged_raw <- non_physio_merged_raw %>%
+mutate(participant_retention_non_physio = case_when(Finished_t8_non_physio == '1' & Finished_t7_non_physio == '1' &    Finished_t6_non_physio == '1'  ~ "7", #Completed ALL timepoints
+                                                    Finished_t8_non_physio == '0' & Finished_t7_non_physio == '1' & Finished_t6_non_physio == '0' ~ "6", #DNC T6, returned for T7, lost at T8
+                                                    Finished_t8_non_physio == '1' & Finished_t7_non_physio == '0' & Finished_t6_non_physio == '1' ~ "5", #DNC T7, returned for T8
+                                                    Finished_t8_non_physio == '1' & Finished_t7_non_physio == '0' & Finished_t6_non_physio == '0' ~ "4", #DNC T6 or T7, returned for T8
+                                                    Finished_t8_non_physio == '1' & Finished_t7_non_physio == '1' & Finished_t6_non_physio == '0' ~ "3", #DNC T6, returned for T7 & T8
+                                                    Finished_t8_non_physio == '0' & Finished_t7_non_physio == '1' & Finished_t6_non_physio == '1' ~ "2", #Lost at T8
+                                                    Finished_t8_non_physio == '0' & Finished_t7_non_physio == '0' & Finished_t6_non_physio == '1' ~ "1", #Lost at T7
+                                                    Finished_t8_non_physio == '0' & Finished_t7_non_physio == '0' & Finished_t6_non_physio == '0' ~ "0" )) #Lost at T6
+
+```
 
 # Calculate summary scores
 
