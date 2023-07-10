@@ -45,7 +45,7 @@ t1_sample_completed <- read.csv("ROTP_Physio_T1_completed.csv")
 
 # Import participant ID key and change email column name to match raw datasets
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing")
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys")
 
 id_key <- read.csv("ROTP_physio_id_key.csv") 
 
@@ -193,7 +193,7 @@ prescreening_eligible <- prescreening_raw %>%
            HIV == "No" &
            heart_attack_stroke == "No" &
            cancer == "No" &
-          autoimmune == "I don't have any autoimmune conditions" &
+           autoimmune == "I don't have any autoimmune conditions" &
            splenectomy == "No" &
            acute._infection == "No" &
            chronic_infection == "No" &
@@ -221,6 +221,8 @@ write.csv(prescreening_questions, "/Users/barreraj/Box Sync/COVID19/COVID Interv
 
 # Add certain participants back into prescreening_eligible and make a note of those
 # who were removed for CONSORT purposes
+
+prescreening_medical_ineligible <- prescreening_questions[c(1:4, 8:10), ]
 
 # filter out participants who are in later timepoints but not prescreening_eligible
 # if any participants are filtered out evaluate on case by case basis
@@ -447,6 +449,8 @@ t3_maybes <- t3_raw %>%
            IVIG == "2"
            ) %>%
   select(RecipientEmail, autoimmune_9_TEXT)
+
+
 
 # Write T3 maybes to Box to review with Lexi
 
