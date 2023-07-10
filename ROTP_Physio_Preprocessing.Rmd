@@ -706,15 +706,6 @@ physio_merged_raw <- physio_merged_raw %>%
 
 # Change column names to prepare for merging with non-physio and longitudinal
 
-```{r}
-
-
-
-
-
-```
-
-
 ## Change timepoint identifiers
 
 ```{r}
@@ -833,13 +824,13 @@ physio_merged_raw <- physio_merged_raw %>%
 # Calculate summary scores
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_full_t5_physio = rowMeans(select(., ptg_1_t5_physio:ptg_21_t5_physio)))
+  mutate(ptgi_full_t5_physio = rowSums(select(., ptg_1_t5_physio:ptg_21_t5_physio)))
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_full_t7_physio = rowMeans(select(., ptg_1_t7_physio:ptg_21_t7_physio)))
+  mutate(ptgi_full_t7_physio = rowSums(select(., ptg_1_t7_physio:ptg_21_t7_physio)))
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_full_t8_physio = rowMeans(select(., ptg_1_t8_physio:ptg_21_t8_physio)))
+  mutate(ptgi_full_t8_physio = rowSums(select(., ptg_1_t8_physio:ptg_21_t8_physio)))
 
 # Make summary score dataframes
 
@@ -871,33 +862,33 @@ psych::alpha(ptgi_full_t8_physio_df)
 # T5
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_abridged_t5_physio = (ptg_1_t5_physio + ptg_2_t5_physio + ptg_3_t5_physio + ptg_4_t5_physio + ptg_6_t5_physio + ptg_7_t5_physio + ptg_8_t5_physio + ptg_9_t5_physio + ptg_10_t5_physio + ptg_11_t5_physio + ptg_13_t5_physio + ptg_14_t5_physio + ptg_15_t5_physio + ptg_16_t5_physio + ptg_17_t5_physio + ptg_18_t5_physio + ptg_20_t5_physio + ptg_21_t5_physio)/19)
+  mutate(ptgi_abridged_t5_physio = (ptg_1_t5_physio + ptg_2_t5_physio + ptg_3_t5_physio + ptg_4_t5_physio + ptg_6_t5_physio + ptg_7_t5_physio + ptg_8_t5_physio + ptg_9_t5_physio + ptg_10_t5_physio + ptg_11_t5_physio + ptg_12_t5_physio + ptg_13_t5_physio + ptg_14_t5_physio + ptg_15_t5_physio + ptg_16_t5_physio + ptg_17_t5_physio + ptg_18_t5_physio + ptg_20_t5_physio + ptg_21_t5_physio))
 
 
 ptgi_abridged_t5_physio_df <- physio_merged_raw %>% 
-  select(ptg_1_t5_physio, ptg_2_t5_physio, ptg_3_t5_physio, ptg_4_t5_physio, ptg_6_t5_physio, ptg_7_t5_physio, ptg_8_t5_physio, ptg_9_t5_physio, ptg_10_t5_physio, ptg_11_t5_physio, ptg_13_t5_physio, ptg_14_t5_physio, ptg_15_t5_physio, ptg_16_t5_physio, ptg_17_t5_physio, ptg_18_t5_physio, ptg_20_t5_physio, ptg_21_t5_physio)
+  select(ptg_1_t5_physio, ptg_2_t5_physio, ptg_3_t5_physio, ptg_4_t5_physio, ptg_6_t5_physio, ptg_7_t5_physio, ptg_8_t5_physio, ptg_9_t5_physio, ptg_10_t5_physio, ptg_11_t5_physio, ptg_12_t5_physio, ptg_13_t5_physio, ptg_14_t5_physio, ptg_15_t5_physio, ptg_16_t5_physio, ptg_17_t5_physio, ptg_18_t5_physio, ptg_20_t5_physio, ptg_21_t5_physio)
 
 psych::alpha(ptgi_abridged_t5_physio_df)
 
 # T7
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_abridged_t7_physio = (ptg_1_t7_physio + ptg_2_t7_physio + ptg_3_t7_physio + ptg_4_t7_physio + ptg_6_t7_physio + ptg_7_t7_physio + ptg_8_t7_physio + ptg_9_t7_physio + ptg_10_t7_physio + ptg_11_t7_physio + ptg_13_t7_physio + ptg_14_t7_physio + ptg_15_t7_physio + ptg_16_t7_physio + ptg_17_t7_physio + ptg_18_t7_physio + ptg_20_t7_physio + ptg_21_t7_physio)/19)
+  mutate(ptgi_abridged_t7_physio = (ptg_1_t7_physio + ptg_2_t7_physio + ptg_3_t7_physio + ptg_4_t7_physio + ptg_6_t7_physio + ptg_7_t7_physio + ptg_8_t7_physio + ptg_9_t7_physio + ptg_10_t7_physio + ptg_11_t7_physio + ptg_12_t7_physio + ptg_13_t7_physio + ptg_14_t7_physio + ptg_15_t7_physio + ptg_16_t7_physio + ptg_17_t7_physio + ptg_18_t7_physio + ptg_20_t7_physio + ptg_21_t7_physio))
 
 
 ptgi_abridged_t7_physio_df <- physio_merged_raw %>% 
-  select(ptg_1_t7_physio, ptg_2_t7_physio, ptg_3_t7_physio, ptg_4_t7_physio, ptg_6_t7_physio, ptg_7_t7_physio, ptg_8_t7_physio, ptg_9_t7_physio, ptg_10_t7_physio, ptg_11_t7_physio, ptg_13_t7_physio, ptg_14_t7_physio, ptg_15_t7_physio, ptg_16_t7_physio, ptg_17_t7_physio, ptg_18_t7_physio, ptg_20_t7_physio, ptg_21_t7_physio)
+  select(ptg_1_t7_physio, ptg_2_t7_physio, ptg_3_t7_physio, ptg_4_t7_physio, ptg_6_t7_physio, ptg_7_t7_physio, ptg_8_t7_physio, ptg_9_t7_physio, ptg_10_t7_physio, ptg_11_t7_physio, ptg_12_t7_physio, ptg_13_t7_physio, ptg_14_t7_physio, ptg_15_t7_physio, ptg_16_t7_physio, ptg_17_t7_physio, ptg_18_t7_physio, ptg_20_t7_physio, ptg_21_t7_physio)
 
 psych::alpha(ptgi_abridged_t7_physio_df)
 
 # T8
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_abridged_t8_physio = (ptg_1_t8_physio + ptg_2_t8_physio + ptg_3_t8_physio + ptg_4_t8_physio + ptg_6_t8_physio + ptg_7_t8_physio + ptg_8_t8_physio + ptg_9_t8_physio + ptg_10_t8_physio + ptg_11_t8_physio + ptg_13_t8_physio + ptg_14_t8_physio + ptg_15_t8_physio + ptg_16_t8_physio + ptg_17_t8_physio + ptg_18_t8_physio + ptg_20_t8_physio + ptg_21_t8_physio)/19)
+  mutate(ptgi_abridged_t8_physio = (ptg_1_t8_physio + ptg_2_t8_physio + ptg_3_t8_physio + ptg_4_t8_physio + ptg_6_t8_physio + ptg_7_t8_physio + ptg_8_t8_physio + ptg_9_t8_physio + ptg_10_t8_physio + ptg_11_t8_physio + ptg_12_t8_physio + ptg_13_t8_physio + ptg_14_t8_physio + ptg_15_t8_physio + ptg_16_t8_physio + ptg_17_t8_physio + ptg_18_t8_physio + ptg_20_t8_physio + ptg_21_t8_physio))
 
 
 ptgi_abridged_t8_physio_df <- physio_merged_raw %>% 
-  select(ptg_1_t8_physio, ptg_2_t8_physio, ptg_3_t8_physio, ptg_4_t8_physio, ptg_6_t8_physio, ptg_7_t8_physio, ptg_8_t8_physio, ptg_9_t8_physio, ptg_10_t8_physio, ptg_11_t8_physio, ptg_13_t8_physio, ptg_14_t8_physio, ptg_15_t8_physio, ptg_16_t8_physio, ptg_17_t8_physio, ptg_18_t8_physio, ptg_20_t8_physio, ptg_21_t8_physio)
+  select(ptg_1_t8_physio, ptg_2_t8_physio, ptg_3_t8_physio, ptg_4_t8_physio, ptg_6_t8_physio, ptg_7_t8_physio, ptg_8_t8_physio, ptg_9_t8_physio, ptg_10_t8_physio, ptg_11_t8_physio, ptg_12_t8_physio, ptg_13_t8_physio, ptg_14_t8_physio, ptg_15_t8_physio, ptg_16_t8_physio, ptg_17_t8_physio, ptg_18_t8_physio, ptg_20_t8_physio, ptg_21_t8_physio)
 
 psych::alpha(ptgi_abridged_t8_physio_df)
 
@@ -915,7 +906,7 @@ psych::alpha(ptgi_abridged_t8_physio_df)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_relationships_t5_physio = (ptg_6_t5_physio + ptg_7_t5_physio + 
-                                    ptg_9_t5_physio + ptg_12_t5_physio + ptg_15_t5_physio + ptg_17_t5_physio + ptg_20_t5_physio)/7)
+                                    ptg_9_t5_physio + ptg_12_t5_physio + ptg_15_t5_physio + ptg_17_t5_physio + ptg_20_t5_physio))
 
 ptgi_relationships_t5_df_physio <- physio_merged_raw %>% 
   select(ptg_6_t5_physio, ptg_7_t5_physio, 
@@ -927,7 +918,7 @@ psych::alpha(ptgi_relationships_t5_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_possibilities_t5_physio = (ptg_2_t5_physio + ptg_13_t5_physio + 
-        ptg_14_t5_physio + ptg_18_t5_physio + ptg_21_t5_physio)/5)
+        ptg_14_t5_physio + ptg_18_t5_physio + ptg_21_t5_physio))
 
 ptgi_possibilities_t5_df_physio <- physio_merged_raw %>% 
   select(ptg_2_t5_physio, ptg_13_t5_physio, 
@@ -939,7 +930,7 @@ psych::alpha(ptgi_possibilities_t5_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_strength_t5_physio = (ptg_4_t5_physio + ptg_8_t5_physio + 
-        ptg_10_t5_physio + ptg_16_t5_physio)/4)
+        ptg_10_t5_physio + ptg_16_t5_physio))
 
 ptgi_strength_t5_df_physio <- physio_merged_raw %>% 
   select(ptg_4_t5_physio, ptg_8_t5_physio,  
@@ -951,7 +942,7 @@ psych::alpha(ptgi_strength_t5_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_appreciation_t5_physio = (ptg_1_t5_physio + ptg_3_t5_physio + 
-        ptg_11_t5_physio)/3)
+        ptg_11_t5_physio))
 
 ptgi_appreciation_t5_df_physio <- physio_merged_raw %>% 
   select(ptg_1_t5_physio, ptg_3_t5_physio,  
@@ -962,7 +953,7 @@ psych::alpha(ptgi_appreciation_t5_df_physio)
 ## Spiritual
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_spiritual_t5_physio = (ptg_5_t5_physio + ptg_19_t5_physio)/2)
+  mutate(ptgi_spiritual_t5_physio = (ptg_5_t5_physio + ptg_19_t5_physio))
 
 ptgi_spiritual_t5_df_physio <- physio_merged_raw %>% 
   select(ptg_5_t5_physio, ptg_19_t5_physio)
@@ -976,7 +967,7 @@ psych::alpha(ptgi_spiritual_t5_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_relationships_t7_physio = (ptg_6_t7_physio + ptg_7_t7_physio + 
-                                    ptg_9_t7_physio + ptg_12_t7_physio + ptg_15_t7_physio + ptg_17_t7_physio + ptg_20_t7_physio)/7)
+                                    ptg_9_t7_physio + ptg_12_t7_physio + ptg_15_t7_physio + ptg_17_t7_physio + ptg_20_t7_physio))
 
 ptgi_relationships_t7_df_physio <- physio_merged_raw %>% 
   select(ptg_6_t7_physio, ptg_7_t7_physio, 
@@ -988,7 +979,7 @@ psych::alpha(ptgi_relationships_t7_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_possibilities_t7_physio = (ptg_2_t7_physio + ptg_13_t7_physio + 
-        ptg_14_t7_physio + ptg_18_t7_physio + ptg_21_t7_physio)/5)
+        ptg_14_t7_physio + ptg_18_t7_physio + ptg_21_t7_physio))
 
 ptgi_possibilities_t7_df_physio <- physio_merged_raw %>% 
   select(ptg_2_t7_physio, ptg_13_t7_physio, 
@@ -1000,7 +991,7 @@ psych::alpha(ptgi_possibilities_t7_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_strength_t7_physio = (ptg_4_t7_physio + ptg_8_t7_physio + 
-        ptg_10_t7_physio + ptg_16_t7_physio)/4)
+        ptg_10_t7_physio + ptg_16_t7_physio))
 
 ptgi_strength_t7_df_physio <- physio_merged_raw %>% 
   select(ptg_4_t7_physio, ptg_8_t7_physio,  
@@ -1012,7 +1003,7 @@ psych::alpha(ptgi_strength_t7_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_appreciation_t7_physio = (ptg_1_t7_physio + ptg_3_t7_physio + 
-        ptg_11_t7_physio)/3)
+        ptg_11_t7_physio))
 
 ptgi_appreciation_t7_df_physio <- physio_merged_raw %>% 
   select(ptg_1_t7_physio, ptg_3_t7_physio,  
@@ -1023,7 +1014,7 @@ psych::alpha(ptgi_appreciation_t7_df_physio)
 ## Spiritual
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_spiritual_t7_physio = (ptg_5_t7_physio + ptg_19_t7_physio)/2)
+  mutate(ptgi_spiritual_t7_physio = (ptg_5_t7_physio + ptg_19_t7_physio))
 
 ptgi_spiritual_t7_df_physio <- physio_merged_raw %>% 
   select(ptg_5_t7_physio, ptg_19_t7_physio)
@@ -1036,7 +1027,7 @@ psych::alpha(ptgi_spiritual_t7_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_relationships_t8_physio = (ptg_6_t8_physio + ptg_7_t8_physio + 
-                                    ptg_9_t8_physio + ptg_12_t8_physio + ptg_15_t8_physio + ptg_17_t8_physio + ptg_20_t8_physio)/7)
+                                    ptg_9_t8_physio + ptg_12_t8_physio + ptg_15_t8_physio + ptg_17_t8_physio + ptg_20_t8_physio))
 
 ptgi_relationships_t8_df_physio <- physio_merged_raw %>% 
   select(ptg_6_t8_physio, ptg_7_t8_physio, 
@@ -1048,7 +1039,7 @@ psych::alpha(ptgi_relationships_t8_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_possibilities_t8_physio = (ptg_2_t8_physio + ptg_13_t8_physio + 
-        ptg_14_t8_physio + ptg_18_t8_physio + ptg_21_t8_physio)/5)
+        ptg_14_t8_physio + ptg_18_t8_physio + ptg_21_t8_physio))
 
 ptgi_possibilities_t8_df_physio <- physio_merged_raw %>% 
   select(ptg_2_t8_physio, ptg_13_t8_physio, 
@@ -1060,7 +1051,7 @@ psych::alpha(ptgi_possibilities_t8_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_strength_t8_physio = (ptg_4_t8_physio + ptg_8_t8_physio + 
-        ptg_10_t8_physio + ptg_16_t8_physio)/4)
+        ptg_10_t8_physio + ptg_16_t8_physio))
 
 ptgi_strength_t8_df_physio <- physio_merged_raw %>% 
   select(ptg_4_t8_physio, ptg_8_t8_physio,  
@@ -1072,7 +1063,7 @@ psych::alpha(ptgi_strength_t8_df_physio)
 
 physio_merged_raw <- physio_merged_raw %>% 
   mutate(ptgi_appreciation_t8_physio = (ptg_1_t8_physio + ptg_3_t8_physio + 
-        ptg_11_t8_physio)/3)
+        ptg_11_t8_physio))
 
 ptgi_appreciation_t8_df_physio <- physio_merged_raw %>% 
   select(ptg_1_t8_physio, ptg_3_t8_physio,  
@@ -1083,7 +1074,7 @@ psych::alpha(ptgi_appreciation_t8_df_physio)
 ## Spiritual
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(ptgi_spiritual_t8_physio = (ptg_5_t8_physio + ptg_19_t8_physio)/2)
+  mutate(ptgi_spiritual_t8_physio = (ptg_5_t8_physio + ptg_19_t8_physio))
 
 ptgi_spiritual_t8_df_physio <- physio_merged_raw %>% 
   select(ptg_5_t8_physio, ptg_19_t8_physio)
@@ -1138,7 +1129,7 @@ physio_merged_raw[ ,co_reverse_columns_t8] <- 8 - physio_merged_raw[ ,co_reverse
 
 ## Calculate summary scores and alphas CO Mindset 
 
-```{r calculate summary scores for comindset}
+```{r calculate summary scores for co mindset}
 
 # T5
 
@@ -1440,7 +1431,6 @@ psych::alpha(swb_t8_physio_df)
 ```
 
 
-
 ## Global Health - Combined (Physical, Mental, QoL)
 
 ### Calculate summary scores
@@ -1479,6 +1469,7 @@ global_health_full_t8_physio_df <- physio_merged_raw %>%
 psych::alpha(global_health_full_t8_physio_df)
 
 ```
+
 
 ## Meaning - Presence Subscale
 
@@ -1605,7 +1596,7 @@ physio_merged_raw[ ,"resilience_3_t8_physio"] <- 6 - physio_merged_raw[ ,"resili
 # T5
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(resilience_t5_physio = rowSums(select(.,resilience_base_1_t6_physio:resilience_base_4_t6_physio)))
+  mutate(resilience_t5_physio = rowMeans(select(.,resilience_base_1_t6_physio:resilience_base_4_t6_physio)))
 
 resilience_t5_physio_df <- physio_merged_raw %>% 
   select(resilience_base_1_t6_physio:resilience_base_4_t6_physio)
@@ -1615,7 +1606,7 @@ psych::alpha(resilience_t5_physio_df)
 # T7
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(resilience_t7_physio = rowSums(select(.,resilience_1_t7_physio:resilience_4_t7_physio)))
+  mutate(resilience_t7_physio = rowMeans(select(.,resilience_1_t7_physio:resilience_4_t7_physio)))
 
 resilience_t7_physio_df <- physio_merged_raw %>% 
   select(resilience_1_t7_physio:resilience_4_t7_physio)
@@ -1625,7 +1616,7 @@ psych::alpha(resilience_t7_physio_df)
 # T8
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(resilience_t8_physio = rowSums(select(.,resilience_1_t8_physio:resilience_4_t8_physio)))
+  mutate(resilience_t8_physio = rowMeans(select(.,resilience_1_t8_physio:resilience_4_t8_physio)))
 
 resilience_t8_physio_df <- physio_merged_raw %>% 
   select(resilience_1_t8_physio:resilience_4_t8_physio)
@@ -1720,6 +1711,257 @@ physio_merged_raw <- physio_merged_raw %>%
 
 
 ```
+
+## Stress Mindset
+
+### Rescale items
+
+```{r}
+
+# Rescale items from a 1-5 to a 0-4 scale
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(across(c(stress_mindset_1_t5_physio:stress_mindset_4_t5_physio), ~.-1))
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(across(c(stress_mindset_1_t7_physio:stress_mindset_4_t7_physio), ~.-1))
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(across(c(stress_mindset_1_t8_physio:stress_mindset_4_t8_physio), ~.-1))
+
+```
+
+### Reverse score items
+
+```{r}
+
+# Reverse score questions 1 and 3
+
+# T5
+
+physio_merged_raw[ ,'stress_mindset_1_t5_physio'] <- 4 - physio_merged_raw[ ,'stress_mindset_1_t5_physio']
+physio_merged_raw[ ,'stress_mindset_3_t5_physio'] <- 4 - physio_merged_raw[ ,'stress_mindset_3_t5_physio']
+
+# T7
+
+physio_merged_raw[ ,'stress_mindset_1_t7_physio'] <- 4 - physio_merged_raw[ ,'stress_mindset_1_t7_physio']
+physio_merged_raw[ ,'stress_mindset_3_t7_physio'] <- 4 - physio_merged_raw[ ,'stress_mindset_3_t7_physio']
+
+#T7
+
+physio_merged_raw[ ,'stress_mindset_1_t8_physio'] <- 4 - physio_merged_raw[ ,'stress_mindset_1_t8_physio']
+physio_merged_raw[ ,'stress_mindset_3_t8_physio'] <- 4 - physio_merged_raw[ ,'stress_mindset_3_t8_physio']
+
+```
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(stress_mindset_t5_physio = rowMeans(select(.,stress_mindset_1_t5_physio:stress_mindset_4_t5_physio)))
+
+stress_mindset_t5_physio_df <- physio_merged_raw %>%
+  select(stress_mindset_1_t5_physio:stress_mindset_4_t5_physio)
+
+psych::alpha(stress_mindset_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(stress_mindset_t7_physio = rowMeans(select(.,stress_mindset_1_t7_physio:stress_mindset_4_t7_physio)))
+
+stress_mindset_t7_physio_df <- physio_merged_raw %>%
+  select(stress_mindset_1_t7_physio:stress_mindset_4_t7_physio)
+
+psych::alpha(stress_mindset_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(stress_mindset_t8_physio = rowMeans(select(.,stress_mindset_1_t8_physio:stress_mindset_4_t8_physio)))
+
+stress_mindset_t8_physio_df <- physio_merged_raw %>%
+  select(stress_mindset_1_t8_physio:stress_mindset_4_t8_physio)
+
+psych::alpha(stress_mindset_t8_physio_df)
+
+```
+
+## Well-Being Growth Mindset
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(growth_mindset_t5_physio = rowMeans(select(.,growth_mindset_1_t5_physio:growth_mindset_4_t5_physio)))
+
+growth_mindset_t5_physio_df <- physio_merged_raw %>%
+  select(growth_mindset_1_t5_physio:growth_mindset_4_t5_physio)
+
+psych::alpha(growth_mindset_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(growth_mindset_t7_physio = rowMeans(select(.,growth_mindset_1_t7_physio:growth_mindset_4_t7_physio)))
+
+growth_mindset_t7_physio_df <- physio_merged_raw %>%
+  select(growth_mindset_1_t7_physio:growth_mindset_4_t7_physio)
+
+psych::alpha(growth_mindset_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(growth_mindset_t8_physio = rowMeans(select(.,growth_mindset_1_t8_physio:growth_mindset_4_t8_physio)))
+
+growth_mindset_t8_physio_df <- physio_merged_raw %>%
+  select(growth_mindset_1_t8_physio:growth_mindset_4_t8_physio)
+
+psych::alpha(growth_mindset_t8_physio_df)
+
+
+```
+
+## Cognitive Flexibility
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(cog_flexibility_t5_physio = rowMeans(select(.,cog_flexibility_1_t5_physio:cog_flexibility_12_t5_physio)))
+
+cog_flexibility_t5_physio_df <- physio_merged_raw %>%
+  select(cog_flexibility_1_t5_physio:cog_flexibility_12_t5_physio)
+
+psych::alpha(cog_flexibility_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(cog_flexibility_t7_physio = rowMeans(select(.,cog_flexibility_1_t7_physio:cog_flexibility_12_t7_physio)))
+
+cog_flexibility_t7_physio_df <- physio_merged_raw %>%
+  select(cog_flexibility_1_t7_physio:cog_flexibility_12_t7_physio)
+
+psych::alpha(cog_flexibility_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(cog_flexibility_t8_physio = rowMeans(select(.,cog_flexibility_1_t8_physio:cog_flexibility_12_t8_physio)))
+
+cog_flexibility_t8_physio_df <- physio_merged_raw %>%
+  select(cog_flexibility_1_t8_physio:cog_flexibility_12_t8_physio)
+
+psych::alpha(cog_flexibility_t8_physio_df)
+
+```
+
+## Primal World-Beliefs
+
+### Rescale items
+
+```{r}
+
+# Rescale items from a 1-6 to a 0-5 scale
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(across(c(primals_1_t5_physio:primals_6_t5_physio), ~.-1))
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(across(c(primals_1_t7_physio:primals_6_t7_physio), ~.-1))
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(across(c(primals_1_t8_physio:primals_6_t8_physio), ~.-1))
+
+```
+
+### Reverse score items
+
+```{r}
+
+# Reverse score questions 3, 4, and 6
+
+# T5
+
+physio_merged_raw[ ,'primals_3_t5_physio'] <- 5 - physio_merged_raw[ ,'primals_3_t5_physio']
+physio_merged_raw[ ,'primals_4_t5_physio'] <- 5 - physio_merged_raw[ ,'primals_4_t5_physio']
+physio_merged_raw[ ,'primals_6_t5_physio'] <- 5 - physio_merged_raw[ ,'primals_6_t5_physio']
+
+# T7
+
+physio_merged_raw[ ,'primals_3_t7_physio'] <- 5 - physio_merged_raw[ ,'primals_3_t7_physio']
+physio_merged_raw[ ,'primals_4_t7_physio'] <- 5 - physio_merged_raw[ ,'primals_4_t7_physio']
+physio_merged_raw[ ,'primals_6_t7_physio'] <- 5 - physio_merged_raw[ ,'primals_6_t7_physio']
+
+#T8
+
+physio_merged_raw[ ,'primals_3_t8_physio'] <- 5 - physio_merged_raw[ ,'primals_3_t8_physio']
+physio_merged_raw[ ,'primals_4_t8_physio'] <- 5 - physio_merged_raw[ ,'primals_4_t8_physio']
+physio_merged_raw[ ,'primals_6_t8_physio'] <- 5 - physio_merged_raw[ ,'primals_6_t8_physio']
+
+
+```
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(primals_t5_physio = rowMeans(select(.,primals_1_t5_physio:primals_6_t5_physio)))
+
+primals_t5_physio_df <- physio_merged_raw %>%
+  select(primals_1_t5_physio:primals_6_t5_physio)
+
+psych::alpha(primals_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(primals_t5_physio = rowMeans(select(.,primals_1_t7_physio:primals_6_t7_physio)))
+
+primals_t5_physio_df <- physio_merged_raw %>%
+  select(primals_t7_1_physio:primals_t7_6_physio)
+
+psych::alpha(primals_t7_physio_df)
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(primals_t8_physio = rowMeans(select(.,primals_1_t8_physio:primals_6_t8_physio)))
+
+primals_t8_physio_df <- physio_merged_raw %>%
+  select(primals_1_t8_physio:primals_6_t8_physio)
+
+psych::alpha(primals_t8_physio_df)
+
+```
+
+
 
 
 # Write ID key to Box
