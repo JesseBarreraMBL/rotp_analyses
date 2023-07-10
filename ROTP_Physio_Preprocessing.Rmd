@@ -664,7 +664,8 @@ physio_merged_raw <- physio_merged_raw %>%
                 "co_mindset_1_t1":"vax_status_t1",
                 "age_t1", "gender_t1", "race_ethnicity_t1",
                 "education_t1":"political_party_t1",
-                "household_18_t1":"prh_self_cov_t1",
+                "household_18_t1":"caregiving_13_t1",
+                "global_health_base_1_t2":"prh_self_cov_t2",
                 "cov_number_t2", 
                 "Step.3.Permission_t2",
                 "Duration..in.seconds._t3",
@@ -1437,6 +1438,8 @@ psych::alpha(swb_t8_physio_df)
 
 ```{r}
 
+str(physio_merged_raw, list.len = ncol(physio_merged_raw))
+
 # T5
 
 physio_merged_raw <- physio_merged_raw %>% 
@@ -1665,53 +1668,6 @@ psych::alpha(closeness_t8_physio_df)
 
 ```
 
-# Make and export identifying key
-
-```{r}
-
-# Add participant_id column
-
-physio_merged_raw <- id_key %>% 
-  select(participant_id, RecipientEmail) %>% 
-  inner_join(physio_merged_raw, by = "RecipientEmail")
-
-
-# Make identifying key
-
-physio_id_key <- physio_merged_raw %>% 
-  select(participant_id, RecipientEmail, StartDate_t5_physio, EndDate_t5_physio, duration_t5_physio,
-         Finished_t5_physio, RecipientLastName_t5_physio,
-         RecipientFirstName_t5_physio, LocationLatitude_t5_physio, LocationLongitude_t5_physio, hipaa_authorization_1_t5_physio,
-         hipaa_authorization_2_t5_physio, first_name_t5_physio, last_name_t5_physio, address_t5_physio, apartment_t5_physio,
-         city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, StartDate_t6_physio, EndDate_t6_physio,
-         duration_t6_physio, Finished_t6_physio, RecipientFirstName_t6_physio, RecipientLastName_t6_physio, LocationLatitude_t6_physio, LocationLongitude_t6_physio, StartDate_t7_physio, EndDate_t7_physio, duration_t7_physio, 
-         Finished_t7_physio, RecipientFirstName_t7_physio, RecipientLastName_t7_physio, LocationLatitude_t7_physio, LocationLongitude_t7_physio, StartDate_t8_physio, EndDate_t8_physio, duration_t8_physio, Finished_t8_physio,
-         RecipientFirstName_t8_physio, RecipientLastName_t8_physio, LocationLatitude_t8_physio, LocationLongitude_t8_physio
-         )
-
-# Remove unnecessary data from physio_merged
-
-physio_merged_raw <- physio_merged_raw %>% 
-  select(-c(StartDate_t5_physio, EndDate_t5_physio, RecipientLastName_t5_physio,
-         RecipientFirstName_t5_physio, LocationLatitude_t5_physio, LocationLongitude_t5_physio, hipaa_authorization_1_t5_physio,
-         hipaa_authorization_2_t5_physio, first_name_t5_physio, last_name_t5_physio, address_t5_physio, apartment_t5_physio,
-         city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, StartDate_t6_physio, EndDate_t6_physio,
-         RecipientFirstName_t6_physio, RecipientLastName_t6_physio, LocationLatitude_t6_physio, LocationLongitude_t6_physio,
-         con_vid_1_time_First.Click_t6_physio:con_vid_2_time_Click.Count_t6_physio, 
-         con_vid_3_time_First.Click_t6_physio:con_vid_3_time_Click.Count_t6_physio,
-         con_vid_4_time_First.Click_t6_physio:con_vid_4_time_Click.Count_t6_physio,
-         con_vid_5_time_First.Click_t6_physio:con_vid_5_time_Click.Count_t6_physio,
-         Part.1.Vid.1.Timing_First.Click_t6_physio:Part.1.Vid.1.Timing_Click.Count_t6_physio,
-         Part.1.Vid.2.Timing_First.Click_t6_physio:Part.1.Vid.2.Timing_Click.Count_t6_physio,
-         Step.2.Vid.1.Time_First.Click_t6_physio:Step.2.Vid.1.Time_Click.Count_t6_physio,
-         Part.2.Vid.2.Timing_First.Click_t6_physio:Part.2.Vid.2.Timing_Click.Count_t6_physio,
-         Step.2.Vid.3.Time_First.Click_t6_physio:Step.2.Vid.3.Time_Click.Count_t6_physio,
-         StartDate_t7_physio, EndDate_t7_physio, RecipientFirstName_t7_physio, RecipientLastName_t7_physio, LocationLatitude_t7_physio, LocationLongitude_t7_physio, StartDate_t8_physio, EndDate_t8_physio,
-         RecipientFirstName_t8_physio, RecipientLastName_t8_physio, LocationLatitude_t8_physio, LocationLongitude_t8_physio))
-
-
-```
-
 ## Stress Mindset
 
 ### Rescale items
@@ -1805,30 +1761,30 @@ psych::alpha(stress_mindset_t8_physio_df)
 # T5
 
 physio_merged_raw <- physio_merged_raw %>%
-  mutate(growth_mindset_t5_physio = rowMeans(select(.,growth_mindset_1_t5_physio:growth_mindset_4_t5_physio)))
+  mutate(growth_mindset_t5_physio = rowMeans(select(.,growth_mindset_1_t5_physio:growth_mindset_3_t5_physio)))
 
 growth_mindset_t5_physio_df <- physio_merged_raw %>%
-  select(growth_mindset_1_t5_physio:growth_mindset_4_t5_physio)
+  select(growth_mindset_1_t5_physio:growth_mindset_3_t5_physio)
 
 psych::alpha(growth_mindset_t5_physio_df)
 
 # T7
 
 physio_merged_raw <- physio_merged_raw %>%
-  mutate(growth_mindset_t7_physio = rowMeans(select(.,growth_mindset_1_t7_physio:growth_mindset_4_t7_physio)))
+  mutate(growth_mindset_t7_physio = rowMeans(select(.,growth_mindset_1_t7_physio:growth_mindset_3_t7_physio)))
 
 growth_mindset_t7_physio_df <- physio_merged_raw %>%
-  select(growth_mindset_1_t7_physio:growth_mindset_4_t7_physio)
+  select(growth_mindset_1_t7_physio:growth_mindset_3_t7_physio)
 
 psych::alpha(growth_mindset_t7_physio_df)
 
 # T8
 
 physio_merged_raw <- physio_merged_raw %>%
-  mutate(growth_mindset_t8_physio = rowMeans(select(.,growth_mindset_1_t8_physio:growth_mindset_4_t8_physio)))
+  mutate(growth_mindset_t8_physio = rowMeans(select(.,growth_mindset_1_t8_physio:growth_mindset_3_t8_physio)))
 
 growth_mindset_t8_physio_df <- physio_merged_raw %>%
-  select(growth_mindset_1_t8_physio:growth_mindset_4_t8_physio)
+  select(growth_mindset_1_t8_physio:growth_mindset_3_t8_physio)
 
 psych::alpha(growth_mindset_t8_physio_df)
 
@@ -1942,10 +1898,10 @@ psych::alpha(primals_t5_physio_df)
 # T7
 
 physio_merged_raw <- physio_merged_raw %>%
-  mutate(primals_t5_physio = rowMeans(select(.,primals_1_t7_physio:primals_6_t7_physio)))
+  mutate(primals_t7_physio = rowMeans(select(.,primals_1_t7_physio:primals_6_t7_physio)))
 
-primals_t5_physio_df <- physio_merged_raw %>%
-  select(primals_t7_1_physio:primals_t7_6_physio)
+primals_t7_physio_df <- physio_merged_raw %>%
+  select(primals_1_t7_physio:primals_6_t7_physio)
 
 psych::alpha(primals_t7_physio_df)
 
@@ -1960,6 +1916,55 @@ primals_t8_physio_df <- physio_merged_raw %>%
 psych::alpha(primals_t8_physio_df)
 
 ```
+
+
+# Make and export identifying key
+
+```{r}
+
+# Add participant_id column
+
+physio_merged_raw <- id_key %>% 
+  select(participant_id, RecipientEmail) %>% 
+  inner_join(physio_merged_raw, by = "RecipientEmail")
+
+
+# Make identifying key
+
+physio_id_key <- physio_merged_raw %>% 
+  select(participant_id, RecipientEmail, Status_t5_physio, Progress_t5_physio, Finished_t5_physio, StartDate_t5_physio, EndDate_t5_physio, duration_t5_physio,
+         Finished_t5_physio, RecipientLastName_t5_physio,
+         RecipientFirstName_t5_physio, LocationLatitude_t5_physio, LocationLongitude_t5_physio, hipaa_authorization_1_t5_physio,
+         hipaa_authorization_2_t5_physio, first_name_t5_physio, last_name_t5_physio, address_t5_physio, apartment_t5_physio,
+         city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, Status_t6_physio, Progress_t6_physio, Finished_t6_physio,  StartDate_t6_physio, EndDate_t6_physio,
+         duration_t6_physio, Finished_t6_physio, RecipientFirstName_t6_physio, RecipientLastName_t6_physio, LocationLatitude_t6_physio, LocationLongitude_t6_physio, Status_t7_physio, Progress_t7_physio, Finished_t7_physio, StartDate_t7_physio, EndDate_t7_physio, duration_t7_physio, 
+         Finished_t7_physio, RecipientFirstName_t7_physio, RecipientLastName_t7_physio, LocationLatitude_t7_physio, LocationLongitude_t7_physio, Status_t8_physio, Progress_t8_physio, Finished_t8_physio, StartDate_t8_physio, EndDate_t8_physio, duration_t8_physio, Finished_t8_physio,
+         RecipientFirstName_t8_physio, RecipientLastName_t8_physio, LocationLatitude_t8_physio, LocationLongitude_t8_physio
+         )
+
+# Remove unnecessary data from physio_merged
+
+physio_merged_raw <- physio_merged_raw %>% 
+  select(-c(RecipientEmail, Status_t5_physio, Progress_t5_physio, Finished_t5_physio, StartDate_t5_physio, duration_t5_physio, EndDate_t5_physio, RecipientLastName_t5_physio,
+         RecipientFirstName_t5_physio, LocationLatitude_t5_physio, LocationLongitude_t5_physio, hipaa_authorization_1_t5_physio,
+         hipaa_authorization_2_t5_physio, first_name_t5_physio, last_name_t5_physio, address_t5_physio, apartment_t5_physio,
+         city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, Status_t6_physio, Progress_t6_physio, Finished_t6_physio, duration_t6_physio, StartDate_t6_physio, EndDate_t6_physio,
+         RecipientFirstName_t6_physio, RecipientLastName_t6_physio, LocationLatitude_t6_physio, LocationLongitude_t6_physio,
+         con_vid_1_time_First.Click_t6_physio:con_vid_2_time_Click.Count_t6_physio, 
+         con_vid_3_time_First.Click_t6_physio:con_vid_3_time_Click.Count_t6_physio,
+         con_vid_4_time_First.Click_t6_physio:con_vid_4_time_Click.Count_t6_physio,
+         con_vid_5_time_First.Click_t6_physio:con_vid_5_time_Click.Count_t6_physio,
+         Part.1.Vid.1.Timing_First.Click_t6_physio:Part.1.Vid.1.Timing_Click.Count_t6_physio,
+         Part.1.Vid.2.Timing_First.Click_t6_physio:Part.1.Vid.2.Timing_Click.Count_t6_physio,
+         Step.2.Vid.1.Time_First.Click_t6_physio:Step.2.Vid.1.Time_Click.Count_t6_physio,
+         Part.2.Vid.2.Timing_First.Click_t6_physio:Part.2.Vid.2.Timing_Click.Count_t6_physio,
+         Step.2.Vid.3.Time_First.Click_t6_physio:Step.2.Vid.3.Time_Click.Count_t6_physio,
+         Status_t7_physio, Progress_t7_physio, Finished_t7_physio, duration_t7_physio, StartDate_t7_physio, EndDate_t7_physio, RecipientFirstName_t7_physio, RecipientLastName_t7_physio, LocationLatitude_t7_physio, LocationLongitude_t7_physio, Status_t8_physio, Progress_t8_physio, Finished_t8_physio, duration_t8_physio, StartDate_t8_physio, EndDate_t8_physio,
+         RecipientFirstName_t8_physio, RecipientLastName_t8_physio, LocationLatitude_t8_physio, LocationLongitude_t8_physio))
+
+
+```
+
 
 
 
@@ -1980,16 +1985,4 @@ write.csv(physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Interventio
 
 
 ```
-
-Messing around with biomarkers dataset
-
-``` {r}
-
-biomarkers <- biomarkers %>% 
-  separate(X, into = c('participant_id', 'timepoint', "extra"), sep = c(3,4)) %>% 
-  select(-c("extra"))
-
-
-```
-
 
