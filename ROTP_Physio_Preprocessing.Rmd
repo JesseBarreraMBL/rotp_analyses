@@ -1973,7 +1973,7 @@ physio_merged_raw <- physio_merged_raw %>%
 
 ```{r}
 
-write.csv(physio_id_key, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys/ROTP_Physio_ID_Key.csv")
+write.csv(physio_id_key, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/ROTP_Physio_ID_Key.csv")
 
 ```
 
@@ -1981,7 +1981,7 @@ Write merged raw dataset to Box
 
 ```{r}
 
-write.csv(physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/ROTP_Physio_Summaries.csv")
+write.csv(physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/Preprocessed Data/ROTP_Physio_Summaries.csv")
 
 
 ```
