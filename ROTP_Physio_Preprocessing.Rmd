@@ -1945,7 +1945,7 @@ physio_id_key <- physio_merged_raw %>%
 # Remove unnecessary data from physio_merged
 
 physio_merged_raw <- physio_merged_raw %>% 
-  select(-c(RecipientEmail, Status_t5_physio, Progress_t5_physio, Finished_t5_physio, StartDate_t5_physio, duration_t5_physio, EndDate_t5_physio, RecipientLastName_t5_physio,
+  select(-c(Status_t5_physio, Progress_t5_physio, Finished_t5_physio, StartDate_t5_physio, duration_t5_physio, EndDate_t5_physio, RecipientLastName_t5_physio,
          RecipientFirstName_t5_physio, LocationLatitude_t5_physio, LocationLongitude_t5_physio, hipaa_authorization_1_t5_physio,
          hipaa_authorization_2_t5_physio, first_name_t5_physio, last_name_t5_physio, address_t5_physio, apartment_t5_physio,
          city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, Status_t6_physio, Progress_t6_physio, Finished_t6_physio, duration_t6_physio, StartDate_t6_physio, EndDate_t6_physio,
