@@ -614,22 +614,6 @@ physio_merged_raw <- physio_merged_raw %>%
 
 ```{r}
 
-# Change all Finished_tX_physio to factor variables:
-
-## T5
-physio_merged_raw$Finished_t5_physio <- as.factor(physio_merged_raw$Finished_t5_physio)
-
-## T6
-physio_merged_raw$Finished_t6_physio <- as.factor(physio_merged_raw$Finished_t6_physio)
-
-## T7
-physio_merged_raw$Finished_t7_physio <- as.factor(physio_merged_raw$Finished_t7_physio)
-
-## T8
-physio_merged_raw$Finished_t8_physio <- as.factor(physio_merged_raw$Finished_t8_physio)
-
-
-
 # Replace NA with '0' for all Finished_tX_physio variables:
 
 ## T5 - Not needed (all participants completed T5 survey)
@@ -642,6 +626,22 @@ physio_merged_raw$Finished_t7_physio[is.na(physio_merged_raw$Finished_t7_physio)
 
 ## T8
 physio_merged_raw$Finished_t8_physio[is.na(physio_merged_raw$Finished_t8_physio)] <- 0
+
+
+
+# Change all Finished_tX_physio to factor variables:
+
+## T5
+physio_merged_raw$Finished_t5_physio <- as.character(physio_merged_raw$Finished_t5_physio)
+
+## T6
+physio_merged_raw$Finished_t6_physio <- as.character(physio_merged_raw$Finished_t6_physio)
+
+## T7
+physio_merged_raw$Finished_t7_physio <- as.character(physio_merged_raw$Finished_t7_physio)
+
+## T8
+physio_merged_raw$Finished_t8_physio <- as.character(physio_merged_raw$Finished_t8_physio)
 
 
 
