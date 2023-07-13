@@ -182,69 +182,87 @@ t4_raw <- t4_raw %>%
 
 ### Does not meet medical eligibility criteria
 
-<!-- ```{r} -->
+```{r}
 
-<!-- # Make list of participant emails who meet prescreening criteria -->
+# Make list of participant emails who meet prescreening criteria
 
-<!-- prescreening_eligible <- prescreening_raw %>% -->
-<!--   filter(physio_interested == "Yes" & -->
-<!--            physiology_opt == "Yes" & -->
-<!--            age == "Yes" & -->
-<!--            HIV == "No" & -->
-<!--            heart_attack_stroke == "No" & -->
-<!--            cancer == "No" & -->
-<!--           autoimmune == "I don't have any autoimmune conditions" & -->
-<!--            splenectomy == "No" & -->
-<!--            acute._infection == "No" & -->
-<!--            chronic_infection == "No" & -->
-<!--            meds_general. == "I haven't taken any of these medication and/or treatments." & -->
-<!--            immunomodulators == "I haven't taken any immunomodulators" & -->
-<!--            monoclonals == "I haven't had any monoclonal antibody therapies" & -->
-<!--            IVIG. == "No" -->
-<!--            ) %>% -->
-<!--   select(RecipientEmail) -->
+prescreening_eligible <- prescreening_raw %>%
+  filter(physio_interested == "Yes" &
+           physiology_opt == "Yes" &
+           age == "Yes" &
+           HIV == "No" &
+           heart_attack_stroke == "No" &
+           cancer == "No" &
+           (autoimmune == "I don't have any autoimmune conditions" | 
+              autoimmune == "Other (please elaborate") &
+           splenectomy == "No" &
+           acute._infection == "No" &
+           chronic_infection == "No" &
+           meds_general. == "I haven't taken any of these medication and/or treatments." &
+           immunomodulators == "I haven't taken any immunomodulators" &
+           monoclonals == "I haven't had any monoclonal antibody therapies" &
+           IVIG. == "No"
+           ) %>%
+  select(RecipientEmail)
 
-<!-- # Make list of participants who selected "Other (please elaborate)" for autoimmune -->
-<!-- # so we can evaluate whether they are actually eligible, then potentially subtract -->
-<!-- # the ineligible ones from prescreening_eligible -->
+# Make list of participants who selected "Other (please elaborate)" for autoimmune
+# so we can evaluate whether they are actually eligible, then potentially subtract
+# the ineligible ones from prescreening_eligible
 
-<!-- prescreening_maybes <- prescreening_raw %>% -->
-<!--   filter(physio_interested == "Yes" & -->
-<!--            physiology_opt == "Yes" & -->
-<!--            age == "Yes" & -->
-<!--            HIV == "No" & -->
-<!--            heart_attack_stroke == "No" & -->
-<!--            cancer == "No" & -->
-<!--            autoimmune == "Other (please elaborate)"& -->
-<!--            splenectomy == "No" & -->
-<!--            acute._infection == "No" & -->
-<!--            chronic_infection == "No" & -->
-<!--            meds_general. == "I haven't taken any of these medication and/or treatments." & -->
-<!--            immunomodulators == "I haven't taken any immunomodulators" & -->
-<!--            monoclonals == "I haven't had any monoclonal antibody therapies" & -->
-<!--            IVIG. == "No" -->
-<!--            ) %>% -->
-<!--   select(RecipientEmail, autoimmune_9_TEXT) -->
+prescreening_maybes <- prescreening_raw %>%
+  filter(physio_interested == "Yes" &
+           physiology_opt == "Yes" &
+           age == "Yes" &
+           HIV == "No" &
+           heart_attack_stroke == "No" &
+           cancer == "No" &
+           autoimmune == "Other (please elaborate)" &
+           splenectomy == "No" &
+           acute._infection == "No" &
+           chronic_infection == "No" &
+           meds_general. == "I haven't taken any of these medication and/or treatments." &
+           immunomodulators == "I haven't taken any immunomodulators" &
+           monoclonals == "I haven't had any monoclonal antibody therapies" &
+           IVIG. == "No"
+           ) %>%
+  select(RecipientEmail, autoimmune_9_TEXT)
 
-<!-- prescreening_maybes_included <- prescreening_maybes %>%  -->
-<!--   filter(prescreening_maybes$RecipientEmail %in% t1_raw$RecipientEmail) -->
+prescreening_maybes_included <- prescreening_maybes %>%
+  filter(prescreening_maybes$RecipientEmail %in% t1_raw$RecipientEmail)
 
-<!-- # filter out participants who are in later timepoints but not prescreening_eligible -->
-<!-- # if any participants are filtered out evaluate on case by case basis -->
+# Remove participants who should be screened out due to autoimmune edge cases 
+# (Lexi and Daniel have reviewed)
+# Create separate dataframes, one with autoimmune edge cases and one without
 
-<!-- t1_raw <- t1_raw %>% -->
-<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+prescreening_autoimmune_exclude <- prescreening_maybes_included %>% 
+  slice(1:3, 5)
 
-<!-- t2_raw <- t2_raw %>% -->
-<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+prescreening_autoimmune_include <- prescreening_maybes_included %>% 
+  slice(4, 6)
 
-<!-- t3_raw <- t3_raw %>% -->
-<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+# Remove ineligible autoimmune edge cases from prescreening_eligible
 
-<!-- t4_raw <- t4_raw %>% -->
-<!--   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) -->
+prescreening_eligible <- prescreening_eligible %>% 
+  filter(!(RecipientEmail %in% prescreening_autoimmune_exclude$RecipientEmail))
 
-<!-- ``` -->
+
+# filter out participants who are in later timepoints but not prescreening_eligible
+# if any participants are filtered out evaluate on case by case basis
+
+
+t1_raw <- t1_raw %>%
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+t2_raw <- t2_raw %>%
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+t3_raw <- t3_raw %>%
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+t4_raw <- t4_raw %>%
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+
+```
 
 
 ## T1
@@ -666,6 +684,7 @@ physio_merged_raw <- physio_merged_raw %>%
                 "education_t1":"political_party_t1",
                 "household_18_t1":"caregiving_13_t1",
                 "global_health_base_1_t2":"prh_self_cov_t2",
+                "cov_months_1_t2":"long_covid_t2",
                 "cov_number_t2", 
                 "Step.3.Permission_t2",
                 "Duration..in.seconds._t3",
@@ -688,12 +707,58 @@ physio_merged_raw <- physio_merged_raw %>%
                 "she_3_1_x_t4", "she_3_1_y_t4",
                 "optimism_1_t4":"primals_6_t4"), as.numeric))
 
-str(physio_merged_raw, list.len = ncol(physio_merged_raw))
+
+```
+
+# Convert variables to factors or chars as appropriate
+
+```{r}
+
+# Consent
+
+physio_merged_raw$consent_pt_1_t1 <- gsub("9", "Agree", physio_merged_raw$consent_pt_1_t1)
+
+physio_merged_raw$consent_pt_2_t1 <- gsub("1", "Agree", physio_merged_raw$consent_pt_2_t1)
+
+str(physio_merged_raw)
+
+
+
+# Vaccination Status
+
+physio_merged_raw$vax_status_t1 <- cut(physio_merged_raw$vax_status_t1, 4, labels = c("Fully vaccinated, including booster shot", "Fully vaccinated, not including booster shot", "Partially vaccinated", "Unvaccinated"))
+
+physio_merged_raw$COVID.Vaccine.Statu_t4 <- cut(physio_merged_raw$COVID.Vaccine.Statu_t4, 3, labels = c("Yes - I got vaccinated for the first time", "Yes - I got an additional COVID-19 vaccine/booster", "No"))
+
+# Employment
+
+physio_merged_raw$employment_t1 <- gsub("5", "I was fired from a job", gsub("11", "I was laid off from a job", 
+                                        gsub("12", "I voluntarily quit my job", gsub("13", "I started a new job", gsub("14", "I became voluntarily unemployed", gsub("15", "I became involuntarily unemployed", gsub( "16", "Other (please specify)", gsub("17", "None of the above" ,physio_merged_raw$employment_t1))))))))
+
+# Religion
+
+physio_merged_raw$religion_t1 <- gsub("4", "Jewish", gsub("12", "Christina", gsub("13", "Muslim", 
+                                          gsub("14", "Hindu", gsub("15", "Buddhist", gsub("16", "Sikh",
+                                          gsub("17", "Baha'i", gsub("18", "Atheist", gsub("19", "Agnostic",
+                                          gsub("20", "Other (please specify)", gsub("21", "Nothing in particular",
+                                          gsub("22", "Don't know", gsub("23", "Prefer not to say", physio_merged_raw$religion_t1)))))))))))))
+
+# Gender
+
+physio_merged_raw$gender_t1 <- gsub("1", "Woman", gsub("2", "Man", gsub("3", "Non-Binary", gsub("4", "Prefer other term", physio_merged_raw$gender_t1))))
+
+# Race/Ethnicity
+
+physio_merged_raw$race_ethnicity_t1 <- gsub("1", "Asian", gsub("2", "Hispanic", gsub("3", "Black", gsub("4", "White",
+                                      gsub("5", "Middle Eastern", gsub("6", "Native American", gsub("7", "Multiracial", gsub("8", "Other", physio_merged_raw$race_ethnicity_t1))))))))
+
+# Political Affilation
+
+physio_merged_raw$political_party_t1 <- gsub("1", "Republican", gsub("2", "Democrat", gsub("3", "Independent", gsub("4", "Other", physio_merged_raw$political_party_t1))))
 
 
 ```
 
-# Convert categorical variables to factors
 
 ## Convert StartDate and EndDate from char to mdy_hm
 
@@ -736,6 +801,8 @@ colnames(physio_merged_raw) <- paste(colnames(physio_merged_raw), "physio", sep 
 
 physio_merged_raw <- physio_merged_raw %>% 
   rename("RecipientEmail" = "RecipientEmail_physio",
+         "consent_specimens_t5_physio" = "consent_pt_1_t5_physio",
+         "consent_t5_physio" = "consent_pt_2_t5_physio",
     "duration_t5_physio" = "Duration..in.seconds._t5_physio",
          "duration_t6_physio" = "Duration..in.seconds._t6_physio",
          "duration_t7_physio" = "Duration..in.seconds._t7_physio",
@@ -746,6 +813,7 @@ physio_merged_raw <- physio_merged_raw %>%
          "phq_4_t5_physio" = "phq._4_t5_physio",
          "prh_self_cov_t6_physio" = "prh_self_cov_t6_physio",
          "prh_self_cov_free_t6_physio" = "prh_self_cov_free_t6_physio",
+          "employment_change_t5_physio" = "employment_t5_physio",
          "condition_physio" = "Condition_t6_physio",
          "autoimmune_free_t7_physio" = "autoimmune_9_TEXT_t7_physio",
          "autoimmune_free_t8_physio" = "autoimmune_9_TEXT_t8_physio",
@@ -783,18 +851,73 @@ physio_merged_raw <- physio_merged_raw %>%
 
 ```
 
-# Participant Retention
+# Participant retention
+
+## Calculate dropout time
 
 ```{r}
 
-# Calculate point of dropout for each participant who was successfully randomized
+# Replace NA with '0' for all Finished_tX_physio variables:
+
+## T5 - Not needed (all participants completed T5 survey)
+
+## T6
+
+physio_merged_raw$Finished_t6_physio[is.na(physio_merged_raw$Finished_t6_physio)] <- 0
+
+## T7
+
+physio_merged_raw$Finished_t7_physio[is.na(physio_merged_raw$Finished_t7_physio)] <- 0
+
+## T8
+
+physio_merged_raw$Finished_t8_physio[is.na(physio_merged_raw$Finished_t8_physio)] <- 0
+
+
+# Change all Finished_tX_physio to factor variables:
+
+## T5
+
+physio_merged_raw$Finished_t5_physio <- as.character(physio_merged_raw$Finished_t5_physio)
+
+## T6
+
+physio_merged_raw$Finished_t6_physio <- as.character(physio_merged_raw$Finished_t6_physio)
+
+## T7
+
+physio_merged_raw$Finished_t7_physio <- as.character(physio_merged_raw$Finished_t7_physio)
+
+## T8
+
+physio_merged_raw$Finished_t8_physio <- as.character(physio_merged_raw$Finished_t8_physio)
+
+# Create a retention variable of progression through study surveys. Showing when participants were lost to follow-up, and when participants did not complete (DNC) a timepoint but did return to the study for a later timepoint.
+## Note: T5 not included as all participants completed T5 survey.
+
+
+physio_merged_raw <- physio_merged_raw %>%
+mutate(participant_retention_physio = case_when(Finished_t8_physio == '1' & Finished_t7_physio == '1' &    Finished_t6_physio == '1'  ~ "All", #Completed ALL timepoints
+                                                    Finished_t8_physio == '0' & Finished_t7_physio == '1' & Finished_t6_physio == '0' ~ "N/T6, Y/T7, N/T8", #DNC T6, returned for T7, lost at T8
+                                                    Finished_t8_physio == '1' & Finished_t7_physio == '0' & Finished_t6_physio == '1' ~ "Y/T6, N/T7, Y/T8", #DNC T7, returned for T8
+                                                    Finished_t8_physio == '1' & Finished_t7_physio == '0' & Finished_t6_physio == '0' ~ "N/T6/T7, Y/T8", #DNC T6 or T7, returned for T8
+                                                    Finished_t8_physio == '1' & Finished_t7_physio == '1' & Finished_t6_physio == '0' ~ "N/T6, Y/T7/T8", #DNC T6, returned for T7 & T8
+                                                    Finished_t8_physio == '0' & Finished_t7_physio == '1' & Finished_t6_physio == '1' ~ "T8", #Lost at T8
+                                                    Finished_t8_physio == '0' & Finished_t7_physio == '0' & Finished_t6_physio == '1' ~ "T7", #Lost at T7
+                                                    Finished_t8_physio == '0' & Finished_t7_physio == '0' & Finished_t6_physio == '0' ~ "T6" )) #Lost at T6
+
+
+```
+
+## Calculate intervention/control completion
+
+```{r}
+
+# Add intervention/control column to physio_merged_raw
 
 physio_merged_raw <- physio_merged_raw %>% 
-  mutate(dropped_out = case_when((Finished_t8_physio == 1 ~ "6"),
-         (Finished_t8_physio == (0 | NA)) & (Finished_t7_physio == 1) ~ "3",
-         (Finished_t7_physio == (0 | NA)) & (Finished_t6_physio == 1) ~ "2",
-         (Finished_t6_physio == 0) & (Finished_t5_physio == 1) ~ "1",
-         TRUE ~ "0"))
+  mutate(int_con_completion_physio = case_when(Finished_t6_physio == "1" ~ "Complete",
+                                                   Finished_t6_physio != "1" ~ "Incomplete"))
 
 ```
 

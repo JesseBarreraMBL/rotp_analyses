@@ -513,6 +513,39 @@ non_physio_merged_raw <- non_physio_merged_raw %>%
 
 ```
 
+## Convert variables into factors or chars as appropriate
+
+```{r}
+
+# Consent
+
+non_physio_merged_raw$consent_pt_1_t5 <- gsub("12", "Agree", non_physio_merged_raw$consent_pt_1_t5)
+
+# Vaccination Status
+
+non_physio_merged_raw$vax_status_t5 <- cut(non_physio_merged_raw$vax_status_t5, 4, labels = c("Fully vaccinated, including booster shot", "Fully vaccinated, not including booster shot", "Partially vaccinated", "Unvaccinated"))
+
+non_physio_merged_raw$COVID.Vaccine.Statu_t8 <- cut(non_physio_merged_raw$COVID.Vaccine.Statu_t8, 3, labels = c("Yes - I got vaccinated for the first time", "Yes - I got an additional COVID-19 vaccine/booster", "No"))
+
+# Religion
+
+non_physio_merged_raw$religion_t5 <- gsub("4", "Jewish", gsub("12", "Christina", gsub("13", "Muslim", 
+                                          gsub("14", "Hindu", gsub("15", "Buddhist", gsub("16", "Sikh",
+                                          gsub("17", "Baha'i", gsub("18", "Atheist", gsub("19", "Agnostic",
+                                          gsub("20", "Other (please specify)", gsub("21", "Nothing in particular",
+                                          gsub("22", "Don't know", gsub("23", "Prefer not to say", non_physio_merged_raw$religion_t5)))))))))))))
+
+
+
+# Employment, Age, Gender, Race, Income, Marital Status, Political affiliation, Household composition, Caregiving 
+# measured at T4 longitudinal for non-physio branch participants
+
+
+
+
+```
+
+
 ## Convert StartDate and EndDate from char to mdy_hm
 
 ```{r}
@@ -533,12 +566,14 @@ colnames(non_physio_merged_raw) <- paste(colnames(non_physio_merged_raw), "non_p
 
 ```
 
-## Additional column changes as needed
+
+## Additional column name changes as needed
 
 ```{r}
 
 non_physio_merged_raw <- non_physio_merged_raw %>% 
   rename("RecipientEmail" = "RecipientEmail_non_physio",
+         "consent_t5_non_physio" = 'consent_pt_1_t5_non_physio',
          "duration_t5_non_physio" = "Duration..in.seconds._t5_non_physio",
          "duration_t6_non_physio" = "Duration..in.seconds._t6_non_physio",
          "duration_t7_non_physio" = "Duration..in.seconds._t7_non_physio",
@@ -558,6 +593,75 @@ non_physio_merged_raw <- non_physio_merged_raw %>%
          )
 
 ```
+
+
+# Participant retention
+
+## Calculate dropout time
+
+```{r}
+# Change all Finished_tX_non_physio to factor variables:
+
+## T5
+
+non_physio_merged_raw$Finished_t5_non_physio <- as.factor(non_physio_merged_raw$Finished_t5_non_physio)
+
+## T6
+
+non_physio_merged_raw$Finished_t6_non_physio <- as.factor(non_physio_merged_raw$Finished_t6_non_physio)
+
+## T7
+
+non_physio_merged_raw$Finished_t7_non_physio <- as.factor(non_physio_merged_raw$Finished_t7_non_physio)
+
+## T8
+
+non_physio_merged_raw$Finished_t8_non_physio <- as.factor(non_physio_merged_raw$Finished_t8_non_physio)
+
+# Replace NA with '0' for all Finished_tX_non_physio variables:
+
+## T5 - Not needed (all participants completed T5 survey)
+
+## T6
+
+non_physio_merged_raw$Finished_t6_non_physio[is.na(non_physio_merged_raw$Finished_t6_non_physio)] <- 0
+
+## T7
+
+non_physio_merged_raw$Finished_t7_non_physio[is.na(non_physio_merged_raw$Finished_t7_non_physio)] <- 0
+
+## T8
+
+non_physio_merged_raw$Finished_t8_non_physio[is.na(non_physio_merged_raw$Finished_t8_non_physio)] <- 0
+
+# Create a retention variable of progression through study surveys. Showing when participants were lost to follow-up, and when participants did not complete (DNC) a timepoint but did return to the study for a later timepoint.
+## Note: T5 not included as all participants completed T5 survey.
+
+non_physio_merged_raw <- non_physio_merged_raw %>%
+mutate(participant_retention_non_physio = case_when(Finished_t8_non_physio == '1' & Finished_t7_non_physio == '1' &    Finished_t6_non_physio == '1'  ~ "All", #Completed ALL timepoints
+                                                    Finished_t8_non_physio == '0' & Finished_t7_non_physio == '1' & Finished_t6_non_physio == '0' ~ "N/T6, Y/T7, N/T8", #DNC T6, returned for T7, lost at T8
+                                                    Finished_t8_non_physio == '1' & Finished_t7_non_physio == '0' & Finished_t6_non_physio == '1' ~ "Y/T6, N/T7, Y/T8", #DNC T7, returned for T8
+                                                    Finished_t8_non_physio == '1' & Finished_t7_non_physio == '0' & Finished_t6_non_physio == '0' ~ "N/T6/T7, Y/T8", #DNC T6 or T7, returned for T8
+                                                    Finished_t8_non_physio == '1' & Finished_t7_non_physio == '1' & Finished_t6_non_physio == '0' ~ "N/T6, Y/T7/T8", #DNC T6, returned for T7 & T8
+                                                    Finished_t8_non_physio == '0' & Finished_t7_non_physio == '1' & Finished_t6_non_physio == '1' ~ "T8", #Lost at T8
+                                                    Finished_t8_non_physio == '0' & Finished_t7_non_physio == '0' & Finished_t6_non_physio == '1' ~ "T7", #Lost at T7
+                                                    Finished_t8_non_physio == '0' & Finished_t7_non_physio == '0' & Finished_t6_non_physio == '0' ~ "T6" )) #Lost at T6
+
+```
+
+## Calculate intervention/control completion
+
+```{r}
+
+# Add intervention/control column to non_physio_merged_raw
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(int_con_completion_non_physio = case_when(Finished_t6_non_physio == "1" ~ "Complete",
+                                                   Finished_t6_non_physio != "1" ~ "Incomplete"))
+
+```
+
+
 
 # Calculate summary scores
 
@@ -1402,129 +1506,6 @@ closeness_t8_non_physio_df <- non_physio_merged_raw %>%
   select(closeness_1_t8_non_physio:closeness_4_t8_non_physio)
 
 psych::alpha(closeness_t8_non_physio_df)
-
-
-```
-
-## Stress Mindset
-
-### Rescale items
-
-```{r}
-
-# Rescale items from a 1-5 to a 0-4 scale
-
-# T5
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(across(c(stress_mindset_1_t5_non_physio:stress_mindset_4_t5_non_physio), ~.-1))
-
-# T7
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(across(c(stress_mindset_1_t7_non_physio:stress_mindset_4_t7_non_physio), ~.-1))
-
-# T8
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(across(c(stress_mindset_1_t8_non_physio:stress_mindset_4_t8_non_physio), ~.-1))
-
-```
-
-### Reverse score items
-
-```{r}
-
-# Reverse score questions 1 and 3
-
-# T5
-
-non_physio_merged_raw[ ,'stress_mindset_1_t5_non_physio'] <- 4 - non_physio_merged_raw[ ,'stress_mindset_1_t5_non_physio']
-non_physio_merged_raw[ ,'stress_mindset_3_t5_non_physio'] <- 4 - non_physio_merged_raw[ ,'stress_mindset_3_t5_non_physio']
-
-# T7
-
-non_physio_merged_raw[ ,'stress_mindset_1_t7_non_physio'] <- 4 - non_physio_merged_raw[ ,'stress_mindset_1_t7_non_physio']
-non_physio_merged_raw[ ,'stress_mindset_3_t7_non_physio'] <- 4 - non_physio_merged_raw[ ,'stress_mindset_3_t7_non_physio']
-
-#T7
-
-non_physio_merged_raw[ ,'stress_mindset_1_t8_non_physio'] <- 4 - non_physio_merged_raw[ ,'stress_mindset_1_t8_non_physio']
-non_physio_merged_raw[ ,'stress_mindset_3_t8_non_physio'] <- 4 - non_physio_merged_raw[ ,'stress_mindset_3_t8_non_physio']
-
-```
-
-### Calculate summary scores
-
-```{r}
-
-# T5
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(stress_mindset_t5_non_physio = rowMeans(select(.,stress_mindset_1_t5_non_physio:stress_mindset_4_t5_non_physio)))
-
-stress_mindset_t5_non_physio_df <- non_physio_merged_raw %>%
-  select(stress_mindset_1_t5_non_physio:stress_mindset_4_t5_non_physio)
-
-psych::alpha(stress_mindset_t5_non_physio_df)
-
-# T7
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(stress_mindset_t7_non_physio = rowMeans(select(.,stress_mindset_1_t7_non_physio:stress_mindset_4_t7_non_physio)))
-
-stress_mindset_t7_non_physio_df <- non_physio_merged_raw %>%
-  select(stress_mindset_1_t7_non_physio:stress_mindset_4_t7_non_physio)
-
-psych::alpha(stress_mindset_t7_non_physio_df)
-
-# T8
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(stress_mindset_t8_non_physio = rowMeans(select(.,stress_mindset_1_t8_non_physio:stress_mindset_4_t8_non_physio)))
-
-stress_mindset_t8_non_physio_df <- non_physio_merged_raw %>%
-  select(stress_mindset_1_t8_non_physio:stress_mindset_4_t8_non_physio)
-
-psych::alpha(stress_mindset_t8_non_physio_df)
-
-```
-
-## Well-Being Growth Mindset
-
-### Calculate summary scores
-
-```{r}
-
-# T5
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(growth_mindset_t5_non_physio = rowMeans(select(.,growth_mindset_1_t5_non_physio:growth_mindset_3_t5_non_physio)))
-
-growth_mindset_t5_non_physio_df <- non_physio_merged_raw %>%
-  select(growth_mindset_1_t5_non_physio:growth_mindset_3_t5_non_physio)
-
-psych::alpha(growth_mindset_t5_non_physio_df)
-
-# T7
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(growth_mindset_t7_non_physio = rowMeans(select(.,growth_mindset_1_t7_non_physio:growth_mindset_3_t7_non_physio)))
-
-growth_mindset_t7_non_physio_df <- non_physio_merged_raw %>%
-  select(growth_mindset_1_t7_non_physio:growth_mindset_3_t7_non_physio)
-
-psych::alpha(growth_mindset_t7_non_physio_df)
-
-# T8
-
-non_physio_merged_raw <- non_physio_merged_raw %>%
-  mutate(growth_mindset_t8_non_physio = rowMeans(select(.,growth_mindset_1_t8_non_physio:growth_mindset_3_t8_non_physio)))
-
-growth_mindset_t8_non_physio_df <- non_physio_merged_raw %>%
-  select(growth_mindset_1_t8_non_physio:growth_mindset_3_t8_non_physio)
-
-psych::alpha(growth_mindset_t8_non_physio_df)
 
 
 ```
