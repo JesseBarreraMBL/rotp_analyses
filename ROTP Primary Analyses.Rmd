@@ -205,6 +205,8 @@ rotp_non_physio_long <- bind_rows(rotp_non_physio_t5, rotp_non_physio_t6, rotp_n
 
 rotp_behavioral_long <- bind_rows(rotp_physio_long, rotp_non_physio_long)
 
+write.csv(rotp_behavioral_long, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/rotp_behavioral_long.csv")
+
 ```
 
 ## Make separate dataframe for physio analyses

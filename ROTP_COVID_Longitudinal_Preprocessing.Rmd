@@ -1,6 +1,6 @@
 ---
 title: "ROTP Longitudinal Preprocessing"
-author: "Jesse Barrera"
+author: "Jesse Barrera, Rachael Yielder, Lexi Straube"
 output: html_document
 date: "2023-04-25"
 ---
@@ -21,13 +21,11 @@ library(mice)
 
 ```{r}
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Longitudinal")
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/COVID Longitudinal Preprocessing")
 
 
-longitudinal_raw <- read.csv("COVID_Longitudinal_Raw.csv", na.strings = c("", " "))
+longitudinal_raw <- read.csv("Raw Data/Longitudinal_Raw.csv", na.strings = c("", " "))
 
-
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys")
 
 longitudinal_id_key <- read.csv("ROTP_Longitudinal_ID_Key.csv")
 
@@ -47,6 +45,7 @@ longitudinal_id_key <- longitudinal_id_key %>%
 longitudinal_raw <- longitudinal_raw %>% 
   left_join(longitudinal_id_key, by = "participant_id") %>% 
   select(-c("participant_id"))
+
 ```
 
 # Remove unecessary Qualtrics metadata
@@ -61,11 +60,78 @@ longitudinal_raw <- longitudinal_raw %>%
 
 ```
 
+# Convert variables to factors or chars as appropriate
+
+```{r}
+
+# Consent
+
+longitudinal_raw$consent_t2 <- gsub(as.character(1), "Agree", longitudinal_raw$consent_t2)
+
+longitudinal_raw$consent_t3 <- gsub("1", "Agree", longitudinal_raw$consent_t3)
+
+longitudinal_raw$consent_t4 <- gsub("1", "Agree", longitudinal_raw$consent_t4)
+
+
+
+
+# Employment
+
+longitudinal_raw$employment_status_t4 <- cut(as.numeric(longitudinal_raw$employment_status_t4), 8, c('Currently employed and working full time', "Currently employed and working part-time", "Not currently working/unemployed", "Student", "Full time childcare/homemaker", "Retired", "Disabled", "Other (please explain)"))
+
+# Age
+
+longitudinal_raw <- longitudinal_raw %>% 
+  mutate(dem_age_t1 = as.numeric(dem_age_t1) + 2) %>% 
+  rename("age_t1" = "dem_age_t1")
+
+# Gender
+
+longitudinal_raw <- longitudinal_raw %>% 
+  rename("gender_t1" = "dem_gender_t1")
+
+# Race/Ethnicity
+
+longitudinal_raw <- longitudinal_raw %>% 
+  rename("race_ethnicity_t1" = "dem_race_t1")
+
+# Political Affiliation
+
+longitudinal_raw <- longitudinal_raw %>% 
+  rename("political_party_t1" = "dem_politic_t1")
+
+```
+
+# Convert variables to integers as appropriate
+
+```{r}
+
+longitudinal_raw <- longitudinal_raw %>% 
+  mutate(across(c('co_mindset_2_t4':'soc_sufficient_t4', 'income_t4'), as.numeric))
+
+```
+
+
+# Filter out timepoints 2 and 3 (currently unecessary)
+
+```{r}
+
+
+longitudinal_raw <- longitudinal_raw %>% 
+  select("consent_t1", 'dem_child_t1':'race_ethnicity_t1', 'consent_t4':'email', "age_t1", "gender_t1", "income_t4")
+
+```
+
+
+
 # Write data to Box
 
 ```{r}
 
-write.csv(longitudinal_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Raw Data - Longitudinal/COVID_Longitudinal_Identifiable.csv")
+str(longitudinal_raw, list.len = ncol(longitudinal_raw))
+
+
+write.csv(longitudinal_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/COVID Longitudinal Preprocessing/Preprocessed Data/Longitudinal_Preprocessed.csv")
 
 ```
 
