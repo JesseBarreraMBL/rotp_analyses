@@ -2121,3 +2121,251 @@ write.csv(physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Interventio
 
 ```
 
+
+### Rescale items SFMM
+
+```{r}
+
+# Rescale items from a 1-6 to a 0-5 scale
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>% 
+  mutate(across(c(sfmm_1_t5_physio:sfmm_3_t5_physio), ~.-1))
+
+##NAs in T7 and T8 do not allow for transformation - imputing NAs with 999 and then replacing with NA once finished
+
+#T7 
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_1_t7_physio:sfmm_3_t7_physio), ~ ifelse(. == "NA", 999, .)))
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_1_t7_physio:sfmm_3_t7_physio), as.numeric))
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>% 
+  mutate(across(c(sfmm_1_t7_physio:sfmm_3_t7_physio), ~.-1))
+
+#T8
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_1_t8_physio:sfmm_3_t8_physio), ~ ifelse(. == "NA", 999, .)))
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_1_t8_physio:sfmm_3_t8_physio), as.numeric))
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_1_t8_physio:sfmm_3_t8_physio), ~ . - 1))
+
+
+```
+
+
+
+### Calculate summary scores SFMM
+
+```{r}
+
+# T5
+
+physio_preprocessed_sum  <- physio_preprocessed_sum  %>% 
+  mutate(sfmm_t5_physio = rowSums(select(., sfmm_1_t5_physio:sfmm_3_t5_physio)))
+
+sfmm_t5_physio_df <- physio_preprocessed_sum %>% 
+  select(sfmm_1_t5_physio:sfmm_3_t5_physio)
+
+psych::alpha(sfmm_t5_physio_df)
+
+# T7
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(sfmm_t7_physio = rowSums(select(., sfmm_1_t7_physio:sfmm_3_t7_physio)))
+
+sfmm_t7_physio_df <- physio_preprocessed_sum %>%
+  select(sfmm_1_t7_physio:sfmm_3_t7_physio)
+
+psych::alpha(sfmm_t7_physio_df)
+
+
+# T8
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(sfmm_t8_physio = rowSums(select(., sfmm_1_t8_physio:sfmm_3_t8_physio)))
+
+sfmm_t8_physio_df <- physio_preprocessed_sum %>%
+  select(sfmm_1_t8_physio:sfmm_3_t8_physio)
+
+psych::alpha(sfmm_t8_physio_df)
+
+
+```
+
+
+SFMM Replace NA values in T7 & T8 
+
+```{r}
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_1_t7_physio:sfmm_3_t7_physio), ~ na_if(., 999)))
+
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_1_t8_physio:sfmm_3_t8_physio), ~ na_if(., 999)))
+
+
+#
+
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_t7_physio), ~ na_if(., 2994)))
+
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(sfmm_t8_physio), ~ na_if(., 2994)))
+
+
+
+```
+
+
+
+
+### Rescale items for CMM
+
+```{r}
+
+# Rescale items from a 1-6 to a 0-5 scale
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>% 
+  mutate(across(c(cmm_1_t5_physio:cmm_4_t5_physio), ~.-1))
+
+
+##NAs in T7 and T8 do not allow for transformation - imputing NAs with 999 and then replacing with NA once finished
+
+#T7 
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(cmm_1_t7_physio:cmm_4_t7_physio), ~ ifelse(. == "NA", 999, .)))
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(cmm_1_t7_physio:cmm_4_t7_physio), as.numeric))
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>% 
+  mutate(across(c(cmm_1_t7_physio:cmm_4_t7_physio), ~.-1))
+
+#T8
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(cmm_1_t8_physio:cmm_4_t8_physio), ~ ifelse(. == "NA", 999, .)))
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(cmm_1_t8_physio:cmm_4_t8_physio), as.numeric))
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(across(c(cmm_1_t8_physio:cmm_4_t8_physio), ~ . - 1))
+
+
+```
+
+
+
+Reverse Scoring CMM
+
+```{r}
+#T5 Reverse Scoring 
+
+cmm_reverse_columns_t5 <- physio_preprocessed_sum%>% 
+  select(cmm_1_t8_physio:cmm_4_t8_physio) %>% 
+  colnames()
+
+
+physio_preprocessed_sum [ ,cmm_reverse_columns_t5] = 7 - physio_preprocessed_sum [ , cmm_reverse_columns_t5]
+
+
+#T7 Reverse Scoring
+
+cmm_reverse_columns_t7 <- physio_preprocessed_sum%>% 
+  select(cmm_1_t7_physio:cmm_4_t7_physio) %>% 
+  colnames()
+
+
+physio_preprocessed_sum [ ,cmm_reverse_columns_t7] = 7 - physio_preprocessed_sum [ , cmm_reverse_columns_t7]
+
+
+#T8 Reverse Scoring
+
+cmm_reverse_columns_t8 <- physio_preprocessed_sum%>% 
+  select(cmm_1_t8_physio:cmm_4_t8_physio) %>% 
+  colnames()
+
+
+physio_preprocessed_sum [ ,cmm_reverse_columns_t8] = 7 - physio_preprocessed_sum [ , cmm_reverse_columns_t8]
+
+
+```
+
+
+
+
+Calculate summary scores CMM
+
+```{r}
+
+# T5 CMM Mean-Based Summary Score
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(cmm_t5_physio = rowMeans(select(., cmm_1_t5_physio:cmm_4_t5_physio)))
+
+# T7  CMM Mean-Based Summary Score
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(cmm_t7_physio = rowMeans(select(., cmm_1_t7_physio:cmm_4_t7_physio)))
+
+# T8  CMM Mean-Based Summary Score
+
+physio_preprocessed_sum <- physio_preprocessed_sum %>%
+  mutate(cmm_t8_physio = rowMeans(select(., cmm_1_t8_physio:cmm_4_t8_physio)))
+
+```
+
+
+Calculate Alphas CMM (Sum-Based)
+```{r}
+
+#T5 
+
+cmm_t5_physio_sum_alpha_df  <- physio_preprocessed_sum  %>% 
+  mutate(cmm_t5_physio = rowSums(select(., cmm_1_t5_physio:cmm_4_t5_physio)))
+
+cmm_t5_physio_sum_alpha_df <- physio_preprocessed_sum %>%
+  select(cmm_1_t5_physio:cmm_4_t5_physio)
+
+
+psych::alpha(cmm_t5_physio_sum_alpha_df)
+
+
+#T7 
+
+cmm_t7_physio_sum_alpha_df  <- physio_preprocessed_sum  %>% 
+  mutate(cmm_t7_physio = rowSums(select(., cmm_1_t7_physio:cmm_4_t7_physio)))
+
+cmm_t7_physio_sum_alpha_df <- physio_preprocessed_sum %>%
+  select(cmm_1_t7_physio:cmm_4_t7_physio)
+
+
+psych::alpha(cmm_t7_physio_sum_alpha_df)
+
+
+
+#T8
+
+cmm_t8_physio_sum_alpha_df  <- physio_preprocessed_sum  %>% 
+  mutate(cmm_t8_physio = rowSums(select(., cmm_1_t8_physio:cmm_4_t8_physio)))
+
+cmm_t8_physio_sum_alpha_df <- physio_preprocessed_sum %>%
+  select(cmm_1_t8_physio:cmm_4_t8_physio)
+
+
+psych::alpha(cmm_t8_physio_sum_alpha_df)
+
+```
+
+
+
+
