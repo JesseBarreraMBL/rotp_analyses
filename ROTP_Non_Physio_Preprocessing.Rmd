@@ -24,7 +24,7 @@ library(naniar)
 
 # Set working directory
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP Non-Physio Preprocessing/Step 1 - Merge, Recode, Deidentify/Raw Data - Non-Physio")
+setwd("//Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP Non-Physio Preprocessing/Raw Data")
 
 # Import raw non-physio data
 
