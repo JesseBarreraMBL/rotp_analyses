@@ -16,6 +16,7 @@ library(lubridate)
 library(mice)
 library(kutils)
 library(ggplot2)
+library(tidyverse)
 
 ```
 
@@ -30,16 +31,14 @@ setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses")
 
 # Import 
 
-longitudinal <- read.csv("COVID Longitudinal Preprocessing/Preprocessed Data/Longitudinal_Preprocessed.csv")
-
-physio <- read.csv("ROTP + Physio Preprocessing/Preprocessed Data/ROTP_Physio_Summaries.csv")
+longitudinal <- read.csv("COVID Longitudinal Preprocessing/Preprocessed Data/Longitudinal_Summaries_Raw.csv")
 
 
-non_physio <- read.csv("ROTP Non-Physio Preprocessing/Preprocessed Data/ROTP_Non_Physio_Summaries.csv")
+physio <- read.csv("ROTP + Physio Preprocessing/Preprocessed Data/ROTP_Physio_Summaries_Raw.csv")
 
 
+non_physio <- read.csv("ROTP Non-Physio Preprocessing/Preprocessed Data/ROTP_Non_Physio_Summaries_Raw.csv")
 
-#biomarkers_merged <- read.csv("ROTP_Biomarkers_Merged.csv", na.strings = c("", " "))
 
 ```
 
@@ -61,6 +60,7 @@ physio_merged_wide <- left_join(physio, longitudinal, by = "RecipientEmail") %>%
 colnames(physio_merged_wide) <- gsub("_physio", "", colnames(physio_merged_wide))
 
 
+
 # Merge non-physio with longitudinal
 
 non_physio_merged_wide <- left_join(non_physio, longitudinal, by = "RecipientEmail") %>% 
@@ -68,46 +68,49 @@ non_physio_merged_wide <- left_join(non_physio, longitudinal, by = "RecipientEma
 
 colnames(non_physio_merged_wide) <- gsub("_non_physio", "", colnames(non_physio_merged_wide))
 
+
 # Merge physio and non-physio together
 
-merged_wide <- bind_rows(physio_merged_wide, non_physio_merged_wide)
+## Find columns that are shared and not shared between physio and non-physio
+
+shared_columns <- intersect(colnames(physio_merged_wide), colnames(non_physio_merged_wide))
+
+unshared_columns_physio <- setdiff(colnames(physio_merged_wide), colnames(non_physio_merged_wide))
+
+unshared_columns_non_physio <- setdiff(colnames(non_physio_merged_wide), colnames(physio_merged_wide))
+
+# Merge shared columns together using rbind
+
+physio_shared <- physio_merged_wide[ ,shared_columns]
+
+non_physio_shared <- non_physio_merged_wide[ ,shared_columns]
+
+merged_wide_shared <- rbind(physio_shared, non_physio_shared)
+
+# Merge shared columns with unshared columns using left_join
+
+physio_unshared <- physio_merged_wide[ ,c(unshared_columns_physio, "RecipientEmail")]
+
+non_physio_unshared <- non_physio_merged_wide[ ,c(unshared_columns_non_physio, "RecipientEmail")]
+
+merged_wide <- left_join(merged_wide_shared, physio_unshared, by = "RecipientEmail")
+
+merged_wide <- left_join(merged_wide, non_physio_unshared, by = "RecipientEmail")
 
 ```
-
-# Create summary scores data frame in wide format
 
 ```{r}
 
-# Select physio summaries
+unique(merged_wide$branch)
 
-physio_merged_wide_summaries <- physio_merged_wide %>% 
-  select(vax_status_t5, employment_change_t5, age_t5, religion_t5, gender_t5, race_ethnicity_t5,
-         political_party_t5, employment_status_t4, condition, relationships_open_t8, meaning_open_t8, society_open_1_t8, 
-         society_open_2_t8, participant_retention, ptgi_full_t5:primals_t8, branch) %>% 
-  rename("vax_status" = "vax_status_t5",
-         "employment_change" = "employment_change_t5",
-         "age" = "age_t5",
-         "religion" = "religion_t5",
-         "gender" = "gender_t5",
-         "race_ethnicity" = "race_ethnicity_t5",
-         "political_party" = "political_party_t5",
-         "employment_status" = "employment_status_t4")
+table(merged_wide$int_con_completion, merged_wide$condition, merged_wide$branch)
 
-# Select non-physio summaries
+table(merged_wide$participant_retention, merged_wide$condition, merged_wide$branch)
 
-non_physio_merged_wide_summaries <- non_physio_merged_wide %>% 
-  select(employment_status_t4, age_t1, gender_t1, race_ethnicity_t1, political_party_t1, Condition_t6, relationships_open_t8, meaning_open_t8, society_open_1_t8, 
-         society_open_2_t8, participant_retention, ptgi_full_t5:primals_t8, branch) %>% 
-  rename("condition" = "Condition_t6")
-
-colnames(non_physio_merged_wide_summaries) <- gsub("_t1", "", gsub("_t4", "", colnames(non_physio_merged_wide_summaries)))
-
-# Merge physio and non-physio
-
-merged_wide_summaries <- bind_rows(physio_merged_wide_summaries, non_physio_merged_wide_summaries)
 
 
 ```
+
 
 # Visualize retention
 
@@ -163,190 +166,90 @@ ggplot(merged_wide_simplified_political, aes(x = participant_retention, fill = p
 
 ```{r}
 
-# Convert physio into long format
+# Create separate dataframes for each timepoint
 
-## Create separate dataframes for each timepoint
-
-### T1
-
-physio_merged_t1 <- physio_merged_wide %>% 
-  select(contains("_t1")) %>% 
-  mutate(participant_id = physio_merged_wide$participant_id,
-         condition = physio_merged_wide$condition,
-         timepoint = 1,
-         branch = "physio",
-         retention = physio_merged_wide$participant_retention)
-
-colnames(physio_merged_t1) <- gsub("_t1", "", colnames(physio_merged_t1))
-
-
-
-### T4
-
-physio_merged_t4 <- physio_merged_wide %>% 
-  select(contains("_t4")) %>% 
-  mutate(participant_id = physio_merged_wide$participant_id,
-         condition = physio_merged_wide$condition,
-         timepoint = 4,
-         branch = "physio",
-         retention = physio_merged_wide$participant_retention)
-
-colnames(physio_merged_t4) <- gsub("_t4", "", colnames(physio_merged_t4))
-
-
-
-### T5
-
-physio_merged_t5 <- physio_merged_wide %>% 
+merged_t5 <- merged_wide %>% 
   select(contains("_t5")) %>% 
-  mutate(participant_id = physio_merged_wide$participant_id,
-         condition = physio_merged_wide$condition,
-         timepoint = 5,
-         branch = "physio",
-         retention = physio_merged_wide$participant_retention)
+  mutate(RecipientEmail = merged_wide$RecipientEmail) %>% 
+  mutate(timepoint = 1) 
 
-colnames(physio_merged_t5) <- gsub("_t5", "", colnames(physio_merged_t5))
+colnames(merged_t5) <- gsub("_t5", "", colnames(merged_t5))
 
-
-
-### T6
-
-physio_merged_t6 <- physio_merged_wide %>% 
+merged_t6 <- merged_wide %>% 
   select(contains("_t6")) %>% 
-  mutate(participant_id = physio_merged_wide$participant_id,
-         condition = physio_merged_wide$condition,
-         timepoint = 6,
-         branch = "physio",
-         retention = physio_merged_wide$participant_retention)
+  mutate(RecipientEmail = merged_wide$RecipientEmail) %>% 
+  mutate(timepoint = 2)
 
-colnames(physio_merged_t6) <- gsub("_t6", "", colnames(physio_merged_t6))
+colnames(merged_t6) <- gsub("_t6", "", colnames(merged_t6))
 
-### T7
 
-physio_merged_t7 <- physio_merged_wide %>% 
+merged_t7 <- merged_wide %>% 
   select(contains("_t7")) %>% 
-  mutate(participant_id = physio_merged_wide$participant_id,
-         condition = physio_merged_wide$condition,
-         timepoint = 7,
-         branch = "physio",
-         retention = physio_merged_wide$participant_retention)
+  mutate(RecipientEmail = merged_wide$RecipientEmail) %>% 
+  mutate(timepoint = 3)
 
-colnames(physio_merged_t7) <- gsub("_t7", "", colnames(physio_merged_t7))
+colnames(merged_t7) <- gsub("_t7", "", colnames(merged_t7))
 
-### T8
 
-physio_merged_t8 <- physio_merged_wide %>% 
+merged_t8 <- merged_wide %>% 
   select(contains("_t8")) %>% 
-  mutate(participant_id = physio_merged_wide$participant_id,
-         condition = physio_merged_wide$condition,
-         timepoint = 8,
-         branch = "physio",
-         retention = physio_merged_wide$participant_retention)
+  mutate(RecipientEmail = merged_wide$RecipientEmail) %>% 
+  mutate(timepoint = 4)
 
-colnames(physio_merged_t8) <- gsub("_t8", "", colnames(physio_merged_t8))
-
-# Convert non-physio into long format
-
-## Create separate dataframes for each timepoint
-
-### T1
-
-non_physio_merged_t1 <- non_physio_merged_wide %>% 
-  select(contains("_t1")) %>% 
-  mutate(participant_id = non_physio_merged_wide$participant_id,
-         condition = non_physio_merged_wide$Condition_t6,
-         timepoint = 1,
-         branch = "non-physio",
-         retention = non_physio_merged_wide$participant_retention)
-
-colnames(non_physio_merged_t1) <- gsub("_t1", "", colnames(non_physio_merged_t1))
+colnames(merged_t8) <- gsub("_t8", "", colnames(merged_t8))
 
 
-### T4
+merged_additional <- merged_wide %>% 
+  select(-contains("_t5")) %>% 
+  select(-contains("_t6")) %>% 
+  select(-contains("_t7")) %>% 
+  select(-contains("_t8"))
 
-non_physio_merged_t4 <- non_physio_merged_wide %>% 
-  select(contains("_t4")) %>% 
-  mutate(participant_id = non_physio_merged_wide$participant_id,
-         condition = non_physio_merged_wide$Condition_t6,
-         timepoint = 4,
-         branch = "non_physio",
-         retention = non_physio_merged_wide$participant_retention)
+# Merge dataframes together in long format
 
-colnames(non_physio_merged_t4) <- gsub("_t4", "", colnames(non_physio_merged_t4))
+## Remove timepoint identifiers
 
-### T5
+colnames(merged_t5) <- gsub("_t5", "", colnames(merged_t5))
 
-non_physio_merged_t5 <- non_physio_merged_wide %>% 
-  select(contains("_t5")) %>% 
-  mutate(participant_id = non_physio_merged_wide$participant_id,
-         condition = non_physio_merged_wide$Condition_t6,
-         timepoint = 5,
-         branch = "non_physio",
-         retention = non_physio_merged_wide$participant_retention)
+colnames(merged_t6) <- gsub("_t6", "", colnames(merged_t6))
 
-colnames(non_physio_merged_t5) <- gsub("_t5", "", colnames(non_physio_merged_t5))
+colnames(merged_t7) <- gsub("_t7", "", colnames(merged_t7))
+
+colnames(merged_t8) <- gsub("_t8", "", colnames(merged_t8))
+
+## Merge merged_t5 - merged_t8 together long
+
+merged_long <- bind_rows(merged_t5, merged_t6, merged_t7, merged_t8)
 
 
-### T6
+## Merge with columns that don't change across timepoints
 
-non_physio_merged_t6 <- non_physio_merged_wide %>% 
-  select(contains("_t6")) %>% 
-  mutate(participant_id = non_physio_merged_wide$participant_id,
-         condition = non_physio_merged_wide$Condition_t6,
-         timepoint = 6,
-         branch = "non_physio",
-         retention = non_physio_merged_wide$participant_retention)
-
-colnames(non_physio_merged_t6) <- gsub("_t6", "", colnames(non_physio_merged_t6))
-
-### T7
-
-non_physio_merged_t7 <- non_physio_merged_wide %>% 
-  select(contains("_t7")) %>% 
-  mutate(participant_id = non_physio_merged_wide$participant_id,
-         condition = non_physio_merged_wide$Condition_t6,
-         timepoint = 7,
-         branch = "non_physio",
-         retention = non_physio_merged_wide$participant_retention)
-
-colnames(non_physio_merged_t7) <- gsub("_t7", "", colnames(non_physio_merged_t7))
-
-### T8
-
-non_physio_merged_t8 <- non_physio_merged_wide %>% 
-  select(contains("_t8")) %>% 
-  mutate(participant_id = non_physio_merged_wide$participant_id,
-         condition = non_physio_merged_wide$Condition_t6,
-         timepoint = 8,
-         branch = "non_physio",
-         retention = non_physio_merged_wide$participant_retention)
-
-colnames(non_physio_merged_t8) <- gsub("_t8", "", colnames(non_physio_merged_t8))
-
-
-# Merge dataframes into long format
-
-merged_long <- bind_rows(physio_merged_t1, physio_merged_t4, physio_merged_t5, physio_merged_t6, physio_merged_t7, physio_merged_t8, non_physio_merged_t1, non_physio_merged_t4, non_physio_merged_t5, non_physio_merged_t6, non_physio_merged_t7, non_physio_merged_t8)
+merged_long <- left_join(merged_long, merged_additional, by = "RecipientEmail") 
 
 
 ```
 
-# Fill in values that don't change across timepoints but aren't measured at all timepoints
+# Change order of columns in long dataframe
 
 ```{r}
 
-# Arrange dataframe by a) participant id, and b) timepoint
-
 merged_long <- merged_long %>% 
-  group_by(participant_id) %>% 
-  arrange(timepoint) 
+  relocate(c(participant_id, timepoint, branch, condition, int_con_completion, participant_retention, age:political_party), 
+           .before = prh_routine)
 
-# Fill in demographic variables across timepoints
+```
 
-merged_long <- merged_long %>% 
-  fill(dem_state_resid, political_party, race_ethnicity, gender, age, income)
+# Deidentify long and wide dataframes
 
+```{r}
 
+merged_wide_deidentified <- merged_wide %>% 
+  select(-(RecipientEmail)) %>% 
+  arrange(participant_id)
+
+merged_long_deidentified <- merged_long %>% 
+  select(-c(RecipientEmail)) %>% 
+  arrange(participant_id, timepoint)
 
 ```
 
@@ -356,8 +259,8 @@ merged_long <- merged_long %>%
 
 # Make identifying key
 
-id_key <- rotp_merged %>% 
-  select(participant_id, email)
+id_key <- merged_wide %>% 
+  select(participant_id, RecipientEmail)
 
 # Write ID Key to Box
 
@@ -365,14 +268,16 @@ write.csv(id_key, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/
 
 ```
 
-# Deidentify dataset and write to Box
+# Write deidentified datasets to Box
 
 ```{r}
 
-rotp_merged <- rotp_merged %>% 
-  select(-c(email, X.x, X.y))
+write.csv(merged_wide_deidentified, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/merged_wide_deidentified.csv")
 
-write.csv(rotp_merged, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Deidentified Data/ROTP_Merged_Deidentified.csv")
+write.csv(merged_long_deidentified, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/merged_long_deidentified.csv")
+
+
+
 
 ```
 
