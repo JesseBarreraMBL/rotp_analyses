@@ -73,8 +73,6 @@ longitudinal_raw$consent_t3 <- gsub("1", "Agree", longitudinal_raw$consent_t3)
 longitudinal_raw$consent_t4 <- gsub("1", "Agree", longitudinal_raw$consent_t4)
 
 
-
-
 # Employment
 
 longitudinal_raw$employment_status_t4 <- cut(as.numeric(longitudinal_raw$employment_status_t4), 8, c('Currently employed and working full time', "Currently employed and working part-time", "Not currently working/unemployed", "Student", "Full time childcare/homemaker", "Retired", "Disabled", "Other (please explain)"))
@@ -100,6 +98,30 @@ longitudinal_raw <- longitudinal_raw %>%
 longitudinal_raw <- longitudinal_raw %>% 
   rename("political_party_t1" = "dem_politic_t1")
 
+# Education (recode into binary variable: more than high school/high school or below)
+
+longitudinal_raw$dem_education_t1 <- gsub("Some high school", "HS or less", gsub("High school degree", "HS or less",
+                                                                                 gsub("4-year college degree", "More than HS", gsub("Master's, doctoral, or professional degree", "More than HS", longitudinal_raw$dem_education_t1))))
+
+longitudinal_raw <- longitudinal_raw %>% 
+  rename("education_t1" = 'dem_education_t1')
+
+# Income (recode to match T5 physio branch)
+
+## Convert strings to numeric values
+
+longitudinal_raw$income_t4 <- gsub("k", "000", gsub("K", "000", gsub("thousand", "000", 
+                                                                     gsub("Thousand", "000", longitudinal_raw$income_t4))))
+
+longitudinal_raw$income_t4 <- as.numeric(gsub("\\D", "", longitudinal_raw$income_t4))
+
+str(longitudinal_raw$income_t4)
+
+longitudinal_raw <- longitudinal_raw %>%   
+  mutate(income_t4 = case_when(income_t4 > 150000 ~ "Greater than $150,000",
+                               income_t4 <= 150000 & income_t4 > 50000 ~ "$50,000 - $150,000",
+                               income_t4 <= 50000 ~ "$0 - $50,000"))
+
 ```
 
 # Convert variables to integers as appropriate
@@ -111,14 +133,60 @@ longitudinal_raw <- longitudinal_raw %>%
 
 ```
 
+# Summary Scores
 
-# Filter out timepoints 2 and 3 (currently unecessary)
+## Controllable Meta-Mindset
+
+### Rescale and reverse-code items
 
 ```{r}
 
+# Rescale items from a 1-6 to a 0-5 scale
 
 longitudinal_raw <- longitudinal_raw %>% 
-  select("consent_t1", 'dem_child_t1':'race_ethnicity_t1', 'consent_t4':'email', "age_t1", "gender_t1", "income_t4")
+  mutate(across(c(cmm_1_t4:cmm_4_t4), ~.-1))
+
+# Reverse code items
+
+longitudinal_raw <- longitudinal_raw %>% 
+  mutate(cmm_1_t4 = 5 - cmm_1_t4,
+         cmm_2_t4 = 5 - cmm_2_t4,
+         cmm_3_t4 = 5 - cmm_3_t4,
+         cmm_4_t4 = 5 - cmm_4_t4)
+
+
+```
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# Calculate summary score
+
+longitudinal_raw <- longitudinal_raw %>% 
+  mutate(cmm_t4 = rowMeans(select(.,cmm_1_t4:cmm_4_t4)))
+
+# Calculate alpha
+
+cmm_t4_df <- longitudinal_raw %>% 
+  select(cmm_1_t4:cmm_4_t4)
+
+psych::alpha(cmm_t4_df)
+
+```
+
+# Create dataframe with demographics and summary scores
+
+```{r}
+
+# Select columns
+
+longitudinal_summaries_raw <- longitudinal_raw %>% 
+  select(state_resid_t1, age_t1:political_party_t1, income_t4, employment_status_t4, cmm_t4, email)
+
+# Rename columns to prepare for merge with physio and non-physio
+
+colnames(longitudinal_summaries_raw) <- gsub("_t1", "", gsub("_t4", "", colnames(longitudinal_summaries_raw)))
 
 ```
 
@@ -128,7 +196,7 @@ longitudinal_raw <- longitudinal_raw %>%
 
 ```{r}
 
-str(longitudinal_raw, list.len = ncol(longitudinal_raw))
+write.csv(longitudinal_summaries_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/COVID Longitudinal Preprocessing/Preprocessed Data/Longitudinal_Summaries_Raw.csv")
 
 
 write.csv(longitudinal_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/COVID Longitudinal Preprocessing/Preprocessed Data/Longitudinal_Preprocessed.csv")
