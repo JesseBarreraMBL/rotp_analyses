@@ -27,8 +27,6 @@ library(tidyverse)
 # Set working directory
 
 setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses")
-
-
 # Import 
 
 longitudinal <- read.csv("COVID Longitudinal Preprocessing/Preprocessed Data/Longitudinal_Summaries_Raw.csv")
@@ -116,7 +114,7 @@ table(merged_wide$participant_retention, merged_wide$condition, merged_wide$bran
 
 ```{r}
 
-merged_wide_simplified <- merged_wide_summaries %>% 
+merged_wide_simplified <- merged_wide %>% 
   filter(participant_retention != "N/T6, Y/T7, N/T8") %>% 
   filter(participant_retention != "Y/T6, N/T7, Y/T8") %>% 
   filter(participant_retention != "N/T6/T7, Y/T8") %>% 
@@ -136,7 +134,7 @@ ggplot(merged_wide_simplified_poc, aes(x = participant_retention, fill = race_et
 
 # Condition
 
-ggplot(merged_wide_summaries, aes(x = participant_retention, fill = condition)) +
+ggplot(merged_wide_simplified, aes(x = participant_retention, fill = condition)) +
   geom_bar(position = "dodge") + 
   facet_grid(rows = vars(branch))
 
@@ -157,6 +155,15 @@ merged_wide_simplified_political <- merged_wide_simplified %>%
 ggplot(merged_wide_simplified_political, aes(x = participant_retention, fill = political_party)) +
   geom_bar(position = "dodge") +
   facet_grid(rows = vars(condition))
+
+```
+
+# Make wide format dataframe excluding participants who did not complete T2
+
+```{r}
+
+merged_wide_treated <- merged_wide %>% 
+  filter(int_con_completion == "Complete")
 
 ```
 
@@ -229,11 +236,25 @@ merged_long <- left_join(merged_long, merged_additional, by = "RecipientEmail")
 
 ```
 
+# Make long format dataframe excluding participants who didd not complete intervention or control
+
+```{r}
+
+merged_long_treated <- merged_long %>% 
+  filter(int_con_completion == "Complete")
+
+```
+
+
 # Change order of columns in long dataframe
 
 ```{r}
 
 merged_long <- merged_long %>% 
+  relocate(c(participant_id, timepoint, branch, condition, int_con_completion, participant_retention, age:political_party), 
+           .before = prh_routine)
+
+merged_long_treated <- merged_long_treated %>% 
   relocate(c(participant_id, timepoint, branch, condition, int_con_completion, participant_retention, age:political_party), 
            .before = prh_routine)
 
@@ -247,24 +268,38 @@ merged_wide_deidentified <- merged_wide %>%
   select(-(RecipientEmail)) %>% 
   arrange(participant_id)
 
+merged_wide_deidentified_treated <- merged_wide_treated %>% 
+  select(-(RecipientEmail)) %>% 
+  arrange(participant_id)
+
 merged_long_deidentified <- merged_long %>% 
   select(-c(RecipientEmail)) %>% 
   arrange(participant_id, timepoint)
 
+merged_long_deidentified_treated <- merged_long_treated %>% 
+  select(-(RecipientEmail)) %>% 
+  arrange(participant_id)
+
 ```
 
-# Export identifying key
+# Export identifying keys
 
 ```{r}
 
-# Make identifying key
+# Make identifying keys
 
-id_key <- merged_wide %>% 
+id_key_itt <- merged_wide %>% 
   select(participant_id, RecipientEmail)
 
-# Write ID Key to Box
+id_key_treated <- merged_wide_treated %>% 
+  select(participant_id, RecipientEmail)
 
-write.csv(id_key, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys/ROTP_ID_Key_Merged.csv")
+# Write ID Keys to Box
+
+write.csv(id_key_itt, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys/ROTP_ID_Key_Merged_ITT.csv")
+
+write.csv(id_key_treated, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys/ROTP_ID_Key_Merged_Treated.csv")
+
 
 ```
 
@@ -272,12 +307,17 @@ write.csv(id_key, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/
 
 ```{r}
 
+# Wide dataframes
+
 write.csv(merged_wide_deidentified, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/merged_wide_deidentified.csv")
+
+write.csv(merged_wide_deidentified_treated, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/merged_wide_deidentified_treated.csv")
+
+# Long dataframes
 
 write.csv(merged_long_deidentified, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/merged_long_deidentified.csv")
 
-
-
+write.csv(merged_long_deidentified_treated, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/merged_long_deidentified_treated.csv")
 
 ```
 

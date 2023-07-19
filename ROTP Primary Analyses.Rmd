@@ -40,213 +40,11 @@ library(ggeffects)
 
 ```{r}
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Deidentified Data")
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data")
 
-rotp_merged <- read.csv("ROTP_Merged_Deidentified.csv")
-
-biomarkers <- read.csv("H48_CRP_data_0_imputed.csv")
+merged_deidentified_long <- read.csv("merged_long_deidentified.csv")
 
 ```
-
-# Create a long dataframe of physio and non-physio data
-
-## Remove unecessary columns
-
-```{r}
-
-rotp_behavioral <- rotp_merged %>% 
-  select(-c(X))
-
-```
-
-## Create separate physio and non-physio dataframes
-
-```{r}
-
-rotp_physio <- rotp_behavioral %>% 
-  select(contains("_physio")) %>% 
-  select(!(contains("non"))) %>% 
-  mutate(participant_id = as.factor(rotp_behavioral$participant_id),
-         condition = as.factor(rotp_behavioral$condition_physio)) %>% 
-  filter(!is.na(condition))
-
-rotp_non_physio <- rotp_behavioral %>% 
-  select(contains("non_physio")) %>% 
-  mutate(participant_id = as.factor(rotp_behavioral$participant_id),
-         condition = as.factor(rotp_behavioral$condition_non_physio))  %>% 
-  filter(!is.na(condition))
-
-
-```
-
-## Create separate dataframes for each timepoint
-
-```{r}
-
-# Physio
-
-rotp_physio_t5 <- rotp_physio %>% 
-  select(contains("_t5")) %>% 
-  mutate(participant_id = rotp_physio$participant_id,
-         condition = rotp_physio$condition,
-         timepoint = 5)
-
-rotp_physio_t6 <- rotp_physio %>% 
-  select(contains("_t6")) %>% 
-  mutate(participant_id = rotp_physio$participant_id,
-         condition = rotp_physio$condition,
-         timepoint = 6)
-
-rotp_physio_t7 <- rotp_physio %>% 
-  select(contains("_t7")) %>% 
-  mutate(participant_id = rotp_physio$participant_id,
-         condition = rotp_physio$condition,
-         timepoint = 7)
-
-rotp_physio_t8 <- rotp_physio %>% 
-  select(contains("_t8")) %>% 
-  mutate(participant_id = rotp_physio$participant_id,
-         condition = rotp_physio$condition,
-         timepoint = 8)
-
-
-# Non-Physio
-
-rotp_non_physio_t5 <- rotp_non_physio %>% 
-  select(contains("_t5")) %>% 
-  mutate(participant_id = rotp_non_physio$participant_id,
-         condition = rotp_non_physio$condition,
-         timepoint = 5)
-
-rotp_non_physio_t6 <- rotp_non_physio %>% 
-  select(contains("_t6")) %>% 
-  mutate(participant_id = rotp_non_physio$participant_id,
-         condition = rotp_non_physio$condition,
-         timepoint = 6)
-
-rotp_non_physio_t7 <- rotp_non_physio %>% 
-  select(contains("_t7")) %>% 
-  mutate(participant_id = rotp_non_physio$participant_id,
-         condition = rotp_non_physio$condition,
-         timepoint = 7)
-
-rotp_non_physio_t8 <- rotp_non_physio %>% 
-  select(contains("_t8")) %>% 
-  mutate(participant_id = rotp_non_physio$participant_id,
-         condition = rotp_non_physio$condition,
-         timepoint = 8)
-
-
-```
-
-## Rename variables
-
-```{r}
-
-# Physio
-
-colnames(rotp_physio_t5) <-  gsub("_t5_physio", "", colnames(rotp_physio_t5))
-
-colnames(rotp_physio_t6) <-  gsub("_t6_physio",  "", colnames(rotp_physio_t6))
-
-colnames(rotp_physio_t7) <-  gsub("_t7_physio",  "", colnames(rotp_physio_t7))
-
-colnames(rotp_physio_t8) <-  gsub("_t8_physio",  "", colnames(rotp_physio_t8))
-
-# Non-Physio
-
-colnames(rotp_non_physio_t5) <-  gsub("_t5_non_physio", "", colnames(rotp_non_physio_t5))
-
-colnames(rotp_non_physio_t6) <-  gsub("_t6_non_physio",  "", colnames(rotp_non_physio_t6))
-
-colnames(rotp_non_physio_t7) <-  gsub("_t7_non_physio",  "", colnames(rotp_non_physio_t7))
-
-colnames(rotp_non_physio_t8) <-  gsub("_t8_non_physio",  "", colnames(rotp_non_physio_t8))
-
-```
-
-# Merge timepoints back together for physio and non-physio
-
-```{r}
-
-# Physio
-
-rotp_physio_long <- bind_rows(rotp_physio_t5, rotp_physio_t6, rotp_physio_t7, rotp_physio_t8) %>% 
-  mutate(branch = "physio",
-         timepoint = as.factor(timepoint),
-         cov_months_1 = as.factor(cov_months_1),
-         cov_months_2 = as.factor(cov_months_2),
-         cov_months_3 = as.factor(cov_months_3)) %>% 
-  relocate(participant_id, .before = duration) %>% 
-  relocate(timepoint, .after = participant_id) %>% 
-  relocate(branch, .after = timepoint) %>% 
-  relocate(condition, .after = branch) %>% 
-  arrange(participant_id, timepoint)
-
-# Non-Physio
-
-rotp_non_physio_long <- bind_rows(rotp_non_physio_t5, rotp_non_physio_t6, rotp_non_physio_t7, rotp_non_physio_t8) %>% 
-  mutate(branch = "non physio",
-         timepoint = as.factor(timepoint),
-         cov_months_1 = as.factor(cov_months_1),
-         cov_months_2 = as.factor(cov_months_2),
-         cov_months_3 = as.factor(cov_months_3)) %>% 
-  relocate(participant_id, .before = duration) %>% 
-  relocate(timepoint, .after = participant_id) %>% 
-  relocate(branch, .after = timepoint) %>% 
-   relocate(condition, .after = branch) %>% 
-  arrange(participant_id, timepoint)
-
-```
-
-# Merge physio and non-physio into a single long dataframe
-
-```{r}
-
-rotp_behavioral_long <- bind_rows(rotp_physio_long, rotp_non_physio_long)
-
-write.csv(rotp_behavioral_long, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Preprocessed Data/rotp_behavioral_long.csv")
-
-```
-
-## Make separate dataframe for physio analyses
-
-```{r}
-
-# Change behavioral df timepoints
-
-rotp_behavioral_ajd_t5 <- rotp_behavioral_long %>% 
-  filter(timepoint == 5) %>% 
-  mutate(timepoint = 1) 
-
-rotp_behavioral_ajd_t6 <- rotp_behavioral_long %>% 
-  filter(timepoint == 6) %>% 
-    mutate(timepoint = 1.5)
-
-rotp_behavioral_ajd_t7 <- rotp_behavioral_long %>% 
-  filter(timepoint == 7)  %>% 
-    mutate(timepoint = 2)
-
-rotp_behavioral_ajd_t8 <- rotp_behavioral_long %>% 
-  filter(timepoint == 8) %>% 
-    mutate(timepoint = 3)
-
-rotp_behavioral_adj_123 <- bind_rows(rotp_behavioral_ajd_t5, rotp_behavioral_ajd_t7, rotp_behavioral_ajd_t8)
-
-rotp_behavioral_adj <- bind_rows(rotp_behavioral_ajd_t5,rotp_behavioral_ajd_t6, rotp_behavioral_ajd_t7, rotp_behavioral_ajd_t8)
-
-# Merge with biomarkers
-
-rotp_behavioral_adj <- rotp_behavioral_adj %>% 
-  mutate(timepoint = as.numeric(timepoint),
-         participant_id = as.numeric(participant_id) + 500)
-
-rotp_behavioral_physio_adj <- left_join(rotp_behavioral_adj, biomarkers, by = c("participant_id", "timepoint"))
-
-
-write.csv(rotp_behavioral_physio_adj, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/Deidentified Data/Behavioral_Physio_Long_Conditions.csv")
-```
-
 
 # Primary Analyses
 
@@ -256,11 +54,11 @@ write.csv(rotp_behavioral_physio_adj, "/Users/barreraj/Box Sync/COVID19/COVID In
 
 # T5
 
-rotp_behavioral_long_t5 <- rotp_behavioral_long %>% 
-  filter(timepoint == 5)
+merged_deidentified_long_t1 <- merged_deidentified_long %>% 
+  filter(timepoint == 1) 
 
-ggpairs(rotp_behavioral_long_t5, 157:170, progress = FALSE)
-
+ggpairs(merged_deidentified_long_t1, 34:56, progress = FALSE)
+  
 # T6
 
 rotp_behavioral_long_t6 <- rotp_behavioral_long %>% 
@@ -325,13 +123,369 @@ ggpairs(rotp_behavioral_physio_adj_t3, 3:10, progress = FALSE)
 
 ```
 
+# Visualize descriptives
+
+## Visualize means for outcome variables by demographics and condition
+
+### CO Mindset - Visualize Descriptives
+
+```{r}
+
+# Gender
+
+## Create simplified dataframe without participants with gender = NA, and only including T1, T3, and T4
+
+gender_simplified <- merged_deidentified_long %>% 
+  filter(gender == "Man" | gender == "Woman" | gender == "Non-Binary") %>% 
+  filter(timepoint != 2)
+
+# Visualize CO mindset x gender, collapsed across conditions
+
+ggplot(gender_simplified, aes(x = timepoint, y = co_mindset, fill = gender)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(1,7)) +
+  labs(x = "Gender", y = "Mean of CO Mindset") 
+
+# Visualize CO mindset x gender, separated by condition
+
+ggplot(gender_simplified, aes(x = timepoint, y = co_mindset, fill = gender)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(1,7)) +
+  labs(x = "Gender", y = "Mean of CO Mindset") + 
+  facet_grid(rows = vars(condition))
+
+# Race_ethnicity
+
+## Create simplified dataframe without participants with race_ethnicity = NA, and only including T1, T3, and T4
+
+race_ethnicity_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(race_ethnicity))) %>% 
+  filter(timepoint != 2)
+
+# Visualize CO mindset x race_ethnicity, collapsed across conditions
+
+ggplot(race_ethnicity_simplified, aes(x = timepoint, y = co_mindset, fill = race_ethnicity)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(1,7)) +
+  labs(x = "Timepoint", y = "Mean of CO Mindset") 
+
+# Visualize CO mindset x race_ethnicity, separated by condition
+
+ggplot(race_ethnicity_simplified, aes(x = timepoint, y = co_mindset, fill = race_ethnicity)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(1,7)) +
+  labs(x = "Timepoint", y = "Mean of CO Mindset") + 
+  facet_grid(rows = vars(condition))
+  
+# Education
+
+## Create simplified dataframe without participants with education = NA, and only including T1, T3, and T4
+
+education_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(education))) %>% 
+  filter(timepoint != 2)
+
+# Visualize CO mindset x education, collapsed across conditions
+
+ggplot(education_simplified, aes(x = timepoint, y = co_mindset, fill = education)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(1,7)) +
+  labs(x = "Timepoint", y = "Mean of CO Mindset") 
+
+# Visualize CO mindset x education, separated by condition
+
+ggplot(education_simplified, aes(x = timepoint, y = co_mindset, fill = education)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(1,7)) +
+  labs(x = "Timepoint", y = "Mean of CO Mindset") + 
+  facet_grid(rows = vars(condition))
+
+# Political Party
+
+political_party_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(political_party))) %>% 
+  filter(timepoint != 2)
+
+# Visualize CO mindset x political_party, collapsed across conditions
+
+ggplot(political_party_simplified, aes(x = timepoint, y = co_mindset, fill = political_party)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(1,7)) +
+  labs(x = "Timepoint", y = "Mean of CO Mindset") 
+
+# Visualize CO mindset x political_party, separated by condition
+
+ggplot(political_party_simplified, aes(x = timepoint, y = co_mindset, fill = political_party)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(1,7)) +
+  labs(x = "Timepoint", y = "Mean of CO Mindset") + 
+  facet_grid(rows = vars(condition))
+
+# Pandemic-related hardships
+
+# Simplify dataframe to remove timepoints at which prh was not collected 
+
+prh_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(prh))) %>% 
+  filter(timepoint != 2,
+         timepoint != 3)
+
+# Visualize CO mindset x prh, separated by timepoint
+
+ggplot(prh_simplified, aes(x = prh, y = co_mindset, color = condition)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  coord_cartesian(ylim = c(1,7), xlim = c(10,40)) +
+  labs(x = "Pandemic-related hardships", y = "CO Mindset") +
+  facet_grid(rows = vars(timepoint))
+
+
+
+```
+
+# PTG - Full
+
+```{r}
+
+# Gender
+
+## Create simplified dataframe without participants with gender = NA, and only including T1, T3, and T4
+
+gender_simplified <- merged_deidentified_long %>% 
+  filter(gender == "Man" | gender == "Woman" | gender == "Non-Binary") %>% 
+  filter(timepoint != 2)
+
+# Visualize CO mindset x gender, collapsed across conditions
+
+ggplot(gender_simplified, aes(x = timepoint, y = ptgi_full, fill = gender)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,105)) +
+  labs(x = "Gender", y = "Mean of PHQ-Depression") 
+
+# Visualize CO mindset x gender, separated by condition
+
+ggplot(gender_simplified, aes(x = timepoint, y = ptgi_full, fill = gender)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,105)) +
+  labs(x = "Gender", y = "Mean of PHQ-Depression") + 
+  facet_grid(rows = vars(condition))
+
+# Race_ethnicity
+
+## Create simplified dataframe without participants with race_ethnicity = NA, and only including T1, T3, and T4
+
+race_ethnicity_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(race_ethnicity))) %>% 
+  filter(timepoint != 2)
+
+# Visualize ptgi_full x race_ethnicity, collapsed across conditions
+
+ggplot(race_ethnicity_simplified, aes(x = timepoint, y = ptgi_full, fill = race_ethnicity)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,105)) +
+  labs(x = "Timepoint", y = "Mean of ptgi_full") 
+
+# Visualize ptgi_full x race_ethnicity, separated by condition
+
+ggplot(race_ethnicity_simplified, aes(x = timepoint, y = ptgi_full, fill = race_ethnicity)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,105)) +
+  labs(x = "Timepoint", y = "Mean of ptgi_full") + 
+  facet_grid(rows = vars(condition))
+  
+# Education
+
+## Create simplified dataframe without participants with education = NA, and only including T1, T3, and T4
+
+education_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(education))) %>% 
+  filter(timepoint != 2)
+
+# Visualize ptgi_full x education, collapsed across conditions
+
+ggplot(education_simplified, aes(x = timepoint, y = ptgi_full, fill = education)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,105)) +
+  labs(x = "Timepoint", y = "Mean of ptgi_full") 
+
+# Visualize ptgi_full x education, separated by condition
+
+ggplot(education_simplified, aes(x = timepoint, y = ptgi_full, fill = education)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,105)) +
+  labs(x = "Timepoint", y = "Mean of ptgi_full") + 
+  facet_grid(rows = vars(condition))
+
+# Political Party
+
+political_party_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(political_party))) %>% 
+  filter(timepoint != 2)
+
+# Visualize ptgi_full x political_party, collapsed across conditions
+
+ggplot(political_party_simplified, aes(x = timepoint, y = ptgi_full, fill = political_party)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,105)) +
+  labs(x = "Timepoint", y = "Mean of ptgi_full") 
+
+# Visualize ptgi_full x political_party, separated by condition
+
+ggplot(political_party_simplified, aes(x = timepoint, y = ptgi_full, fill = political_party)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,105)) +
+  labs(x = "Timepoint", y = "Mean of ptgi_full") + 
+  facet_grid(rows = vars(condition))
+
+# Pandemic-related hardships
+
+# Simplify dataframe to remove timepoints at which prh was not collected 
+
+prh_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(prh))) %>% 
+  filter(timepoint != 2,
+         timepoint != 3)
+
+# Visualize ptgi_full x prh, separated by timepoint
+
+ggplot(prh_simplified, aes(x = prh, y = ptgi_full, color = condition)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  coord_cartesian(ylim = c(0,105), xlim = c(10,40)) +
+  labs(x = "Pandemic-related hardships", y = "ptgi_full") +
+  facet_grid(rows = vars(timepoint))
+
+
+
+```
+
+# PHQ-Depression
+
+```{r}
+
+
+# Gender
+
+## Create simplified dataframe without participants with gender = NA, and only including T1, T3, and T4
+
+gender_simplified <- merged_deidentified_long %>% 
+  filter(gender == "Man" | gender == "Woman" | gender == "Non-Binary") %>% 
+  filter(timepoint != 2)
+
+# Visualize CO mindset x gender, collapsed across conditions
+
+ggplot(gender_simplified, aes(x = timepoint, y = phq_depression, fill = gender)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,6)) +
+  labs(x = "Gender", y = "Mean of PHQ-Depression") 
+
+# Visualize CO mindset x gender, separated by condition
+
+ggplot(gender_simplified, aes(x = timepoint, y = phq_depression, fill = gender)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,6)) +
+  labs(x = "Gender", y = "Mean of PHQ-Depression") + 
+  facet_grid(rows = vars(condition))
+
+# Race_ethnicity
+
+## Create simplified dataframe without participants with race_ethnicity = NA, and only including T1, T3, and T4
+
+race_ethnicity_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(race_ethnicity))) %>% 
+  filter(timepoint != 2)
+
+# Visualize phq_depression x race_ethnicity, collapsed across conditions
+
+ggplot(race_ethnicity_simplified, aes(x = timepoint, y = phq_depression, fill = race_ethnicity)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,6)) +
+  labs(x = "Timepoint", y = "Mean of phq_depression") 
+
+# Visualize phq_depression x race_ethnicity, separated by condition
+
+ggplot(race_ethnicity_simplified, aes(x = timepoint, y = phq_depression, fill = race_ethnicity)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,6)) +
+  labs(x = "Timepoint", y = "Mean of phq_depression") + 
+  facet_grid(rows = vars(condition))
+  
+# Education
+
+## Create simplified dataframe without participants with education = NA, and only including T1, T3, and T4
+
+education_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(education))) %>% 
+  filter(timepoint != 2)
+
+# Visualize phq_depression x education, collapsed across conditions
+
+ggplot(education_simplified, aes(x = timepoint, y = phq_depression, fill = education)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,6)) +
+  labs(x = "Timepoint", y = "Mean of phq_depression") 
+
+# Visualize phq_depression x education, separated by condition
+
+ggplot(education_simplified, aes(x = timepoint, y = phq_depression, fill = education)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,6)) +
+  labs(x = "Timepoint", y = "Mean of phq_depression") + 
+  facet_grid(rows = vars(condition))
+
+# Political Party
+
+political_party_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(political_party))) %>% 
+  filter(timepoint != 2)
+
+# Visualize phq_depression x political_party, collapsed across conditions
+
+ggplot(political_party_simplified, aes(x = timepoint, y = phq_depression, fill = political_party)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,6)) +
+  labs(x = "Timepoint", y = "Mean of phq_depression") 
+
+# Visualize phq_depression x political_party, separated by condition
+
+ggplot(political_party_simplified, aes(x = timepoint, y = phq_depression, fill = political_party)) +
+  stat_summary(fun = "mean", geom = "bar", position = "dodge") +
+  coord_cartesian(ylim = c(0,6)) +
+  labs(x = "Timepoint", y = "Mean of phq_depression") + 
+  facet_grid(rows = vars(condition))
+
+# Pandemic-related hardships
+
+# Simplify dataframe to remove timepoints at which prh was not collected 
+
+prh_simplified <- merged_deidentified_long %>% 
+  filter(!(is.na(prh))) %>% 
+  filter(timepoint != 2,
+         timepoint != 3)
+
+# Visualize phq_depression x prh, separated by timepoint
+
+ggplot(prh_simplified, aes(x = prh, y = phq_depression, color = condition)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  coord_cartesian(ylim = c(0,6), xlim = c(10,40)) +
+  labs(x = "Pandemic-related hardships", y = "phq_depression") +
+  facet_grid(rows = vars(timepoint))
+
+
+
+
+```
+
 
 ## CO Mindset - Mixed Model
 
 ```{r}
 
-com.mm <- lmer(co_mindset ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long)
+com.mm <- lmer(co_mindset ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long)
+
+str(merged_deidentified_long$timepoint)
 
 summ(com.mm)
 
@@ -376,12 +530,12 @@ ggplot(rotp_behavioral_long, aes(x = as.numeric(timepoint), y = co_mindset, colo
 
 ```{r}
 
-rotp_behavioral_long_t5_t7_t8 <- rotp_behavioral_long %>% 
+merged_deidentified_long_t5_t7_t8 <- merged_deidentified_long %>% 
   filter(timepoint != 6)
 
 
-ptg_full.mm <- lmer(ptgi_full ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long)
+ptg_full.mm <- lmer(ptgi_full ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(ptg_full.mm)
 
@@ -392,7 +546,7 @@ sjPlot::tab_model(ptg_full.mm)
 
 plot_model(ptg_full.mm)
 
-ggplot(rotp_behavioral_adj_123, aes(x = as.numeric(timepoint), y = ptgi_full, color = condition)) +
+ggplot(merged_deidentified_long_t5_t7_t8, aes(x = as.numeric(timepoint), y = ptgi_full, color = condition)) +
 geom_point(alpha = 0.5, size = 1, position = position_jitter(width = 0.1)) +
   geom_smooth(method = "lm", se = FALSE) +
   labs(title = "Linear Mixed Effects Model of PTG Across Time x Condition") +
@@ -422,8 +576,8 @@ theme_minimal()
 
 ```{r}
 
-ptg_abridged.mm <- lmer(ptgi_abridged ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long)
+ptg_abridged.mm <- lmer(ptgi_abridged ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(ptg_abridged.mm)
 
@@ -443,8 +597,8 @@ PTGI Relationships Subscale - Mixed Model
 
 ```{r}
 
-ptg_relationships.mm <- lmer(ptgi_relationships ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long)
+ptg_relationships.mm <- lmer(ptgi_relationships ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(ptg_relationships.mm)
 
@@ -455,7 +609,7 @@ sjPlot::tab_model(ptg_relationships.mm)
 
 plot_model(ptg_relationships.mm)
 
-ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_relationships, color = condition)) +
+ggplot(merged_deidentified_long_t5_t7_t8, aes(x = timepoint, y = ptgi_relationships, color = condition)) +
   geom_boxplot() + 
   theme_bw()
 
@@ -466,8 +620,8 @@ PTGI Possibilities Subscale - Mixed Models
 
 ```{r}
 
-ptg_possibilities.mm <- lmer(ptgi_possibilities ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long)
+ptg_possibilities.mm <- lmer(ptgi_possibilities ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(ptg_possibilities.mm)
 
@@ -488,8 +642,8 @@ PTGI Strength Subscale - Mixed Models
 
 ```{r}
 
-ptg_strength.mm <- lmer(ptgi_strength ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long)
+ptg_strength.mm <- lmer(ptgi_strength ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(ptg_strength.mm)
 
@@ -522,8 +676,8 @@ PTGI Appreciation - Mixed Model
 
 ```{r}
 
-ptg_appreciation.mm <- lmer(ptgi_appreciation ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long)
+ptg_appreciation.mm <- lmer(ptgi_appreciation ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(ptg_appreciation.mm)
 
@@ -545,8 +699,8 @@ ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_appreciation, color = c
 
 ```{r}
 
-ptg_spiritual.mm <- lmer(ptgi_spiritual ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long)
+ptg_spiritual.mm <- lmer(ptgi_spiritual ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(ptg_spiritual.mm)
 
@@ -568,12 +722,19 @@ ggplot(rotp_behavioral_long, aes(x = timepoint, y = ptgi_spiritual, color = cond
 
 ```{r}
 
-pos_affect.mm <- lmer(pos_affect ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8)
+pos_affect.mm <- lmer(pos_affect ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(pos_affect.mm)
 
 sjPlot::tab_model(pos_affect.mm)
+
+ggplot(merged_deidentified_long_t5_t7_t8, aes(x = timepoint, y = pos_affect, color = condition)) +
+geom_point(alpha = 0.3, size = 1, position = position_jitter(width = 0.1, height = 0.2)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of Positive Affect Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("Positive Affect", limits = 0:6, labels = 0:6) 
 
 
 # Plot model
@@ -590,8 +751,8 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = pos_affect, color =
 
 ```{r}
 
-neg_affect.mm <- lmer(neg_affect ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8)
+neg_affect.mm <- lmer(neg_affect ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(neg_affect.mm)
 
@@ -613,8 +774,8 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = neg_affect, color =
 ```{r}
 
 
-phq_full.mm <- lmer(phq_full ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8)
+phq_full.mm <- lmer(phq_full ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(phq_full.mm)
 
@@ -636,8 +797,8 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = phq_full, color = c
 ```{r}
 
 
-phq_anxiety.mm <- lmer(phq_anxiety ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8)
+phq_anxiety.mm <- lmer(phq_anxiety ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(phq_anxiety.mm)
 
@@ -659,8 +820,8 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = phq_anxiety, color 
 ```{r}
 
 
-phq_depression.mm <- lmer(phq_depression ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8)
+phq_depression.mm <- lmer(phq_depression ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(phq_depression.mm)
 
@@ -679,8 +840,6 @@ geom_point(alpha = 0.3, size = 1, position = position_jitter(width = 0.1, height
 scale_y_discrete("PHQ-Depression", limits = 0:6, labels = 0:6) +
 theme_minimal()
 
-  
-
 # Additional Plots
 
 # Create a scatterplot with lines connecting medians
@@ -691,11 +850,6 @@ labs(title = "Depression Across Time") +
 scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
 scale_y_discrete("PHQ-Depression", limits = 0:6, labels = 0:6) +
 theme_minimal()
-
-
-
-
-
 
 ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = phq_depression, color = condition)) +
   geom_boxplot() +
@@ -710,8 +864,8 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = phq_depression, col
 ```{r}
 
 
-meaning_presence.mm <- lmer(meaning_presence ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8)
+meaning_presence.mm <- lmer(meaning_presence ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(meaning_presence.mm)
 
@@ -732,8 +886,8 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = meaning_presence, c
 ```{r}
 
 
-meaning_search.mm <- lmer(meaning_search ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8)
+meaning_search.mm <- lmer(meaning_search ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(meaning_search.mm)
 
@@ -751,13 +905,10 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = meaning_search, col
 
 ## Resilience - Mixed Model
 
-## Meaning Search - Mixed Model
-
 ```{r}
 
-
-resilience.mm <- lmer(resilience ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8)
+resilience.mm <- lmer(resilience ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
 
 summ(resilience.mm)
 
@@ -767,9 +918,20 @@ sjPlot::tab_model(resilience.mm)
 
 plot_model(resilience.mm)
 
-ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = resilience, color = condition)) +
+ggplot(merged_deidentified_long_t5_t7_t8, aes(x = timepoint, y = resilience, color = condition)) +
   geom_boxplot() +
   theme_bw()
+
+plot_model(resilience.mm)
+
+ggplot(merged_deidentified_long_t5_t7_t8, aes(x = timepoint, y = resilience, color = condition)) +
+geom_point(alpha = 0.3, size = 1, position = position_jitter(width = 0.1, height = 0.2)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of Resilience Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("Reslience", limits = 0:6, labels = 0:6)
+
+
 
 ```
 
@@ -777,8 +939,8 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = resilience, color =
 
 ```{r}
 
-closeness.mm <- (lmer(closeness ~ condition * timepoint + (1 | participant_id), 
-                   data = rotp_behavioral_long_t5_t7_t8))
+closeness.mm <- (lmer(closeness ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8))
 
 summ(closeness.mm)
 
@@ -792,6 +954,57 @@ ggplot(rotp_behavioral_long_t5_t7_t8, aes(x = timepoint, y = closeness, color = 
   geom_boxplot() +
   theme_bw()
 
+```
+
+## Global Well-Being
+
+```{r}
+
+gwb.mm <- (lmer(global_health_full ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8))
+
+summ(gwb.mm)
+
+sjPlot::tab_model(gwb.mm)
+
+```
+
+## Social Well-Being
+
+```{r}
+
+swb.mm <-(lmer(swb ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8))
+
+summ(swb.mm)
+
+sjPlot::tab_model(swb.mm)
+
+```
+
+## Self-Fulfilling Meta Mindset
+
+```{r}
+
+sfmm.mm <-(lmer(sfmm ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8))
+
+summ(sfmm.mm)
+
+sjPlot::tab_model(sfmm.mm)
+
+```
+
+## Controllable Meta Mindset
+
+```{r}
+
+cmm.mm <-(lmer(cmm ~ condition * as.factor(timepoint) + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8))
+
+summ(cmm.mm)
+
+sjPlot::tab_model(cmm.mm)
 
 ```
 
@@ -824,17 +1037,16 @@ library(lavaan)
 # Create new dataset
 
 
-crp_dep_med_model_df <- rotp_behavioral_physio_adj %>% 
-  filter(timepoint == 3, branch == "physio") %>% 
-  select(participant_id, timepoint, condition, phq_depression, CRP_Log2Transformed)
+ptgi_sfmm_med_model_df <- merged_deidentified_long_t5_t7_t8 %>% 
+  select(participant_id, timepoint, condition, ptgi_full, sfmm)
 
-crp_dep_med_model <- '
+ptgi_sfmm_med_model <- '
              # mediator
-             CRP_Log2Transformed ~ a*condition
-             phq_depression ~ b*CRP_Log2Transformed
+             sfmm ~ a*condition
+             ptgi_full ~ b*sfmm
            
              # direct effect
-             phq_depression ~  c*condition
+             ptgi_full ~  c*condition
 
            # indirect effect (a*b)
              ab := a*b
@@ -843,10 +1055,10 @@ crp_dep_med_model <- '
              total := c + (a*b)
              '
          
-crp_dep_med <- sem(crp_dep_med_model, data = crp_dep_med_model_df, meanstructure = TRUE,
+ptgi_sfmm <- sem(ptgi_sfmm_med_model, data = ptgi_sfmm_med_model_df, meanstructure = TRUE,
            se = "boot", bootstrap = 500)
 
-summary(crp_dep_med, fit.measures=T, standardized=T, ci=TRUE)
+summary(ptgi_sfmm, fit.measures=T, standardized=T, ci=TRUE)
 
 ```
 
@@ -898,7 +1110,7 @@ library(lavaan)
 # Create new dataset
 
 
-IL10_dep_med_model_df <- rotp_behavioral_physio_adj %>% 
+IL10_dep_med_model_df <- merged_deidentified_long_t5_t7_t8 %>% 
   filter((timepoint == 3 | timepoint == 1), branch == "physio") %>% 
   select(participant_id, timepoint, condition, phq_depression, IL10_Log2Transformed)
 
@@ -1006,6 +1218,168 @@ summary(pool(fitimp))
 
 
 ```
+
+# Moderator analyses
+
+```{r}
+
+# race_ethnicity x ptgi
+
+merged_deidentified_long_t5_t7_t8 <- merged_deidentified_long_t5_t7_t8 %>% 
+  mutate(race_categorical = ifelse(race_ethnicity == "White", "White",
+                                   ifelse(race_ethnicity != "White", "PoC", NA)))
+
+merged_deidentified_long_white_black <- merged_deidentified_long_t5_t7_t8 %>% 
+  filter(race_ethnicity == "Black" | race_ethnicity == "White")
+
+ptg_race_full.mm <- lmer(ptgi_full ~ condition * as.factor(timepoint) * race_ethnicity + (1 | participant_id), 
+                   data = merged_deidentified_long_white_black)
+
+summ(ptg_race_full.mm)
+
+sjPlot::tab_model(ptg_race_full.mm)
+
+# education x ptgi
+
+ptg_full_education.mm <- lmer(ptgi_full ~ condition * as.factor(timepoint) * education + (1 | participant_id), 
+                   data = merged_deidentified_long_t5_t7_t8)
+
+summ(ptg_full_education.mm)
+
+sjPlot::tab_model(ptg_full_education.mm)
+
+# political x depression
+
+political_simplified <- merged_deidentified_long_t5_t7_t8 %>% 
+  mutate(political_categorical = ifelse(political_party == "Democrat", "Dem",
+                                        "Not Dem")) %>% 
+  filter(!(is.na(political_categorical)))
+
+depression_political.mm <- lmer(phq_depression ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(depression_political.mm)
+
+sjPlot::tab_model(depression_political.mm)
+
+# political x co_mindset
+
+com_political.mm <- lmer(co_mindset ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(com_political.mm)
+
+sjPlot::tab_model(com_political.mm)
+
+# political x ptgi_full
+
+ptgi_political.mm <- lmer(ptgi_full ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(ptgi_political.mm)
+
+sjPlot::tab_model(ptgi_political.mm)
+
+plot_model(ptgi_political.mm)
+
+ggplot(political_simplified, aes(x = timepoint, y = ptgi_full, color = condition)) +
+geom_point(alpha = 0.3, size = 1, position = position_jitter(width = 0.1, height = 0.2)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of PTGI Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("PTGI-Full", limits = 0:6, labels = 0:6) +
+  facet_grid(rows = vars(political_categorical)) +
+theme_minimal()
+
+
+# political x ptgi_relationships
+
+ptgi_relationships_political.mm <- lmer(ptgi_relationships ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(ptgi_relationships_political.mm)
+
+sjPlot::tab_model(ptgi_relationships_political.mm)
+
+ggplot(political_simplified, aes(x = timepoint, y = ptgi_relationships, color = condition)) +
+geom_point(alpha = 0.3, size = 1, position = position_jitter(width = 0.1, height = 0.2)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of PTGI (Relationships) Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("PTGI-Relationships", limits = 0:6, labels = 0:6) +
+  facet_grid(rows = vars(political_categorical)) +
+theme_minimal()
+
+# political x ptgi_possibilities
+
+ptgi_possibilities_political.mm <- lmer(ptgi_possibilities ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(ptgi_possibilities_political.mm)
+
+sjPlot::tab_model(ptgi_possibilities_political.mm)
+
+ggplot(political_simplified, aes(x = timepoint, y = ptgi_possibilities, color = condition)) +
+geom_point(alpha = 0.3, size = 1, position = position_jitter(width = 0.1, height = 0.2)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Linear Mixed Effects Model of PTGI (Possibilities) Across Time x Condition") +
+  scale_x_discrete("Timepoint", limits = 1:3, labels = 1:3) +
+scale_y_discrete("PTGI-Possibilities", limits = 0:6, labels = 0:6) +
+  facet_grid(rows = vars(political_categorical)) +
+theme_minimal()
+
+# political x ptgi_strength
+
+ptgi_strength_political.mm <- lmer(ptgi_strength ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(ptgi_strength_political.mm)
+
+sjPlot::tab_model(ptgi_strength_political.mm)
+
+# political x ptgi_appreciation
+
+ptgi_appreciation_political.mm <- lmer(ptgi_appreciation ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(ptgi_appreciation_political.mm)
+
+sjPlot::tab_model(ptgi_appreciation_political.mm)
+
+table(political_simplified$political_categorical, political_simplified$condition)
+
+# political x meaning (presence and search)
+
+meaning_presence_political.mm <- lmer(meaning_presence ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(meaning_presence_political.mm)
+
+sjPlot::tab_model(meaning_presence_political.mm)
+
+
+meaning_search_political.mm <- lmer(meaning_search ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(meaning_search_political.mm)
+
+sjPlot::tab_model(meaning_search_political.mm)
+
+
+# Resilience
+
+resilience_political.mm <- lmer(resilience ~ condition * as.factor(timepoint) * political_categorical + (1 | participant_id), 
+                   data = political_simplified)
+
+summ(resilience_political.mm)
+
+sjPlot::tab_model(resilience_political.mm)
+
+table(mer)
+
+
+```
+
 
 
 
