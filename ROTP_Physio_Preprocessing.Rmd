@@ -45,7 +45,7 @@ t1_sample_completed <- read.csv("ROTP_Physio_T1_completed.csv")
 
 # Import participant ID key and change email column name to match raw datasets
 
-setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ID Keys")
+setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing")
 
 id_key <- read.csv("ROTP_physio_id_key.csv") 
 
@@ -184,7 +184,7 @@ t4_raw <- t4_raw %>%
 
 ```{r}
 
-# Make list of participant emails who meet prescreening criteria
+# Make list of participant emails who meet prescreening criteria (excluding autoimmune maybes)
 
 prescreening_eligible <- prescreening_raw %>%
   filter(physio_interested == "Yes" &
@@ -193,64 +193,47 @@ prescreening_eligible <- prescreening_raw %>%
            HIV == "No" &
            heart_attack_stroke == "No" &
            cancer == "No" &
-           (autoimmune == "I don't have any autoimmune conditions" | 
-              autoimmune == "Other (please elaborate") &
+           autoimmune == "I don't have any autoimmune conditions" &
            splenectomy == "No" &
            acute._infection == "No" &
            chronic_infection == "No" &
            meds_general. == "I haven't taken any of these medication and/or treatments." &
            immunomodulators == "I haven't taken any immunomodulators" &
            monoclonals == "I haven't had any monoclonal antibody therapies" &
-           IVIG. == "No"
-           ) %>%
-  select(RecipientEmail)
+           IVIG. == "No")
 
 
-# Make list of participants who selected "Other (please elaborate)" for autoimmune
-# so we can evaluate whether they are actually eligible, then potentially subtract
-# the ineligible ones from prescreening_eligible
+# Make a list of participants who were included at T1 and were either a) autoimmune maybes 
+# or b) included mistakenly despite not meeting prescreening criteria
 
-prescreening_maybes <- prescreening_raw %>%
-  filter(physio_interested == "Yes" &
-           physiology_opt == "Yes" &
-           age == "Yes" &
-           HIV == "No" &
-           heart_attack_stroke == "No" &
-           cancer == "No" &
-           autoimmune == "Other (please elaborate)" &
-           splenectomy == "No" &
-           acute._infection == "No" &
-           chronic_infection == "No" &
-           meds_general. == "I haven't taken any of these medication and/or treatments." &
-           immunomodulators == "I haven't taken any immunomodulators" &
-           monoclonals == "I haven't had any monoclonal antibody therapies" &
-           IVIG. == "No"
-           ) %>%
-  select(RecipientEmail, autoimmune_9_TEXT)
+prescreening_maybes <- prescreening_raw %>% 
+  filter(RecipientEmail %in% t1_raw$RecipientEmail) %>% 
+  filter(!(RecipientEmail %in% prescreening_eligible$RecipientEmail))
 
-prescreening_maybes_included <- prescreening_maybes %>%
-  filter(prescreening_maybes$RecipientEmail %in% t1_raw$RecipientEmail)
+# Remove participants who did not meet eligibility criteria and were included mistakenly
 
-# Remove participants who should be screened out due to autoimmune edge cases 
-# (Lexi and Daniel have reviewed)
-# Create separate dataframes, one with autoimmune edge cases and one without
+prescreening_maybes <- prescreening_maybes %>% 
+  filter(RecipientEmail != "kdengle1@gmail.com", # participant does not meet age criteria
+         RecipientEmail != "Kelseymaluck@gmail.com", # participant was taking an excluded medication
+         RecipientEmail != "Max5115@gmail.com", # participant was taking an excluded medication
+         RecipientEmail != "rosemaries@windstream.net", # participant was taking an excluded medication
+         RecipientEmail != "rondacluff@comcast.net", # participant was taking a monoclonal antibody therapy
+         RecipientEmail != "padeilly@gmail.com" # participant was taking a monoclonal antibody therapy
+         )
 
-prescreening_autoimmune_exclude <- prescreening_maybes_included %>% 
-  slice(1:3, 5)
+# Add participants who were autoimmune maybes at prescreening back into prescreening_eligible
 
-prescreening_autoimmune_include <- prescreening_maybes_included %>% 
-  slice(4, 6)
-
-# Remove ineligible autoimmune edge cases from prescreening_eligible
-
-prescreening_eligible <- prescreening_eligible %>% 
-  filter(!(RecipientEmail %in% prescreening_autoimmune_exclude$RecipientEmail))
+prescreening_eligible <- bind_rows(prescreening_eligible, prescreening_maybes)
+  
 
 # filter out participants who are in later timepoints but not prescreening_eligible
-# if any participants are filtered out evaluate on case by case basis
+# add autoimmune column at T1
 
 t1_raw <- t1_raw %>%
-  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
+  filter(RecipientEmail %in% prescreening_eligible$RecipientEmail) 
+
+t1_raw$autoimmune <- c(prescreening_maybes$autoimmune_9_TEXT, rep(NA, nrow(t1_raw) - 
+                                                                    length(prescreening_maybes$autoimmune_9_TEXT)))
 
 t2_raw <- t2_raw %>%
   filter(RecipientEmail %in% prescreening_eligible$RecipientEmail)
@@ -432,106 +415,105 @@ t2_completed_con <- t2_completed %>%
 ```{r}
 
 # filter out participants who do not meet medical eligibility criteria as measured at T3
-# or T4
 
-# Make a list of participants who do not meet eligiblity criteria at T3/T4
-
-# Review with Lexi
-
-# T3
-
-t3_ineligible <- t3_raw %>%
-  filter(age != "1" |
-           HIV != "2" |
-           heart_attack_stroke != "2" |
-           cancer != "2" |
-           autoimmune != "10" |
-           splenectomy != "2" |
-           acute._infection != "2" |
-           chronic_infection != "2" |
-           meds_general != "8" |
-           immunomodulators != "7" |
-           monoclonals != "8" |
-           IVIG != "2"
-           ) %>%
-  select(RecipientEmail)
-
-t3_maybes <- t3_raw %>%
+t3_eligible <- t3_raw %>%
   filter(age == "1" &
            HIV == "2" &
            heart_attack_stroke == "2" &
            cancer == "2" &
-           autoimmune == "9" &
+           autoimmune == "10" &
            splenectomy == "2" &
            acute._infection == "2" &
            chronic_infection == "2" &
            meds_general == "8" &
            immunomodulators == "7" &
            monoclonals == "8" &
-           IVIG == "2"
-           ) %>%
-  select(RecipientEmail, autoimmune_9_TEXT)
+           IVIG == "2")
 
 
+# Make a list of participants who were included at T3 and were either a) autoimmune maybes 
+# or b) included mistakenly despite not meeting prescreening criteria
 
-# Write T3 maybes to Box to review with Lexi
+t3_maybes <- t3_raw %>% 
+  filter(!(RecipientEmail %in% t3_eligible$RecipientEmail))
 
-write.csv(t3_maybes, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/T3 Medical Questions.csv")
+# Remove participants who were mistakenly included and should have been filtered out
 
-t4_ineligible <- t4_raw %>%
-   filter(age != "1" |
-           HIV != "2" |
-           heart_attack_stroke != "2" |
-           cancer != "2" |
-           autoimmune != "10" |
-           splenectomy != "2" |
-           acute._infection != "2" |
-           chronic_infection != "2" |
-           meds_general != "8" |
-           immunomodulators != "7" |
-           monoclonals != "8" |
-           IVIG != "2"
-           ) %>%
-  select(RecipientEmail)
+t3_maybes <- t3_maybes %>% 
+  filter(RecipientEmail != "cheungsharona@gmail.com", # Participant has an acute infection
+         RecipientEmail != "Mmaclauchlan@live.com", # Participant has a chronic infection
+         RecipientEmail != "skyetraveler02@gmail.com", # Participant taking an excluded medication
+         RecipientEmail != "seanstimac@gmail.com", # Participant taking an excluded medication
+         RecipientEmail != "robinmichellec@gmail.com", # Participant taking an excluded medication
+  )
 
-# T4
+# Add participants who were autoimmune maybes back into t3_eligible
 
-t4_maybes <- t4_raw %>%
+t3_eligible <- bind_rows(t3_eligible, t3_maybes)
+
+
+# filter out participants who do not meet medical eligibility criteria as measured at T4
+
+t4_eligible <- t4_raw %>%
   filter(age == "1" &
            HIV == "2" &
            heart_attack_stroke == "2" &
            cancer == "2" &
-           autoimmune == "9" &
+           autoimmune == "10" &
            splenectomy == "2" &
            acute._infection == "2" &
            chronic_infection == "2" &
            meds_general == "8" &
            immunomodulators == "7" &
            monoclonals == "8" &
-           IVIG == "2"
-           ) %>%
-  select(RecipientEmail, autoimmune_9_TEXT)
-
-# Write T4 maybes to Box for Lexi to review
-
-write.csv(t4_maybes, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/Step 1 - Merge, Recode, Deidentify/T4 Medical Questions.csv")
+           IVIG == "2")
 
 
-# Filter out participants who don't meet medical eligiblity at T3/T4
+# Make a list of participants who were included at T4 and were either a) autoimmune maybes 
+# or b) included mistakenly despite not meeting prescreening criteria
 
-t3_t4_ineligible <- bind_rows(t3_ineligible, t4_ineligible)
+t4_maybes <- t4_raw %>% 
+  filter(!(RecipientEmail %in% t4_eligible$RecipientEmail))
+
+# Remove participants who were mistakenly included and should have been filtered out
+# Do not remove participants who met age eligibility at T1 but not at T4
+
+t4_maybes <- t4_maybes %>% 
+  filter(RecipientEmail != "jeccaj@gmail.com", # Participant has HIV
+         RecipientEmail != "jaimidoran@gmail.com", # Participant has cancer
+         RecipientEmail != "khinote@gmail.com", # Particiapnt has an acute infection
+         RecipientEmail != "skyetraveler02@gmail.com", # Participant taking a monoclonal antibody therapy
+  )
+
+# Add participants who were autoimmune maybes back into t4_eligible
+
+t4_eligible <- bind_rows(t4_eligible, t4_maybes)
+
+
+# Combine eligible participants at T3 and T4
+
+t3_t4_eligible <- bind_rows(t3_eligible, t4_eligible)
+
+# Filter out participants at other timepoints who don't meet eligibility criteria at T3 or T4
+# Add autoimmune conditions to autoimmune column
 
 t1_raw <- t1_raw %>%
-  filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+  filter((RecipientEmail %in% t3_t4_eligible$RecipientEmail))
+
+t1_raw <- t1_raw %>% 
+  mutate(autoimmune = 
+         ifelse(RecipientEmail %in% prescreening_maybes$RecipientEmail, prescreening_maybes$autoimmune_9_TEXT,
+         ifelse(RecipientEmail %in% t3_maybes$RecipientEmail, t3_maybes$autoimmune_9_TEXT,
+         ifelse(RecipientEmail %in% t4_maybes$RecipientEmail, t4_maybes$autoimmune_9_TEXT, NA))))
 
 t2_raw <- t2_raw %>%
-   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+   filter((RecipientEmail %in% t3_t4_eligible$RecipientEmail))
 
 t3_raw <- t3_raw %>%
-   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+   filter((RecipientEmail %in% t3_t4_eligible$RecipientEmail))
 
 t4_raw <- t4_raw %>%
-   filter(!(RecipientEmail %in% t3_t4_ineligible$RecipientEmail))
+   filter((RecipientEmail %in% t3_t4_eligible$RecipientEmail))
 
 ```
 
@@ -768,6 +750,21 @@ physio_merged_raw$race_ethnicity_t1 <- gsub("1", "Asian", gsub("2", "Hispanic", 
 
 physio_merged_raw$political_party_t1 <- gsub("1", "Republican", gsub("2", "Democrat", gsub("3", "Independent", gsub("4", "Other", physio_merged_raw$political_party_t1))))
 
+# Education (recode into binary variable: more than high school/high school or below)
+
+physio_merged_raw$education_t1 <- gsub(1, "HS or less", gsub(2, "HS or less",
+                                          gsub(3, "More than HS", gsub(4, "More than HS", physio_merged_raw$education_t1))))
+
+# Income
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(income_t1 = case_when(income_t1 == 5 ~ "$0 - $50,000",
+                                      income_t1 == 6 ~ "$50,000 - $150,000",
+                                      income_t1 == 7 ~ "Greater than $150,000",
+                                      income_t1 == 8 ~ "Prefer not to answer"))
+
+unique(physio_merged_raw$income_t1)
+
 
 ```
 
@@ -813,6 +810,14 @@ colnames(physio_merged_raw) <- paste(colnames(physio_merged_raw), "physio", sep 
 
 physio_merged_raw <- physio_merged_raw %>% 
   rename("RecipientEmail" = "RecipientEmail_physio",
+         "age_physio" = "age_t5_physio",
+         "gender_physio" = "gender_t5_physio",
+         "religion_physio" = "religion_t5_physio",
+         "race_ethnicity_physio" = "race_ethnicity_t5_physio",
+         "education_physio" = "education_t5_physio",
+         "income_physio" = "income_t5_physio",
+         "marital_status_physio" = "marital_status_t5_physio",
+         "political_party_physio" = "political_party_t5_physio",
          "consent_specimens_t5_physio" = "consent_pt_1_t5_physio",
          "consent_t5_physio" = "consent_pt_2_t5_physio",
     "duration_t5_physio" = "Duration..in.seconds._t5_physio",
@@ -856,9 +861,16 @@ physio_merged_raw <- physio_merged_raw %>%
          "cov_sym_free_t8_physio" = "COVID.Symptoms_29_TEXT_t8_physio",
          "cov_status_t8_physio" = "COVID.Status_t8_physio",
          "cov_vax_stat_t8_physio" = "COVID.Vaccine.Statu_t8_physio",
+         "extraversion_t8_physio" = "personality_1_t8_physio",
+         "openness_t8_physio" = "personality_2_t8_physio",
+         "stability_t8_physio" = "personality_3_t8_physio",
+         "warmness_t8_physio" = 'personality_4_t8_physio',
+         "dependability_t8_physio" = "personality_5_t8_physio",
          "seh_3_1_x_t8_physio" = "she_3_1_x_t8_physio",
          "seh_3_1_y_t8_physio" = "she_3_1_y_t8_physio",
-         "seh_3_t8_physio" = "she_3_t8_physio"
+         "seh_3_t8_physio" = "she_3_t8_physio",
+         "age_confirmation_t7_physio" = "age_t7_physio",
+         "age_confirmation_t8_physio" = "age_t8_physio"
           )
 
 ```
@@ -2053,15 +2065,254 @@ psych::alpha(primals_t8_physio_df)
 ```
 
 
+### Rescale items SFMM
+
+```{r}
+
+# Rescale items from a 1-6 to a 0-5 scale
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(sfmm_1_t5_physio:sfmm_3_t5_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(sfmm_1_t7_physio:sfmm_3_t7_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(sfmm_1_t8_physio:sfmm_3_t8_physio), ~.-1))
+
+
+```
+
+
+### Calculate summary scores SFMM
+
+```{r}
+
+# T5
+
+physio_merged_raw  <- physio_merged_raw  %>% 
+  mutate(sfmm_t5_physio = rowMeans(select(., sfmm_1_t5_physio:sfmm_3_t5_physio)))
+
+sfmm_t5_physio_df <- physio_merged_raw %>% 
+  select(sfmm_1_t5_physio:sfmm_3_t5_physio)
+
+psych::alpha(sfmm_t5_physio_df)
+
+# T7
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(sfmm_t7_physio = rowMeans(select(., sfmm_1_t7_physio:sfmm_3_t7_physio)))
+
+sfmm_t7_physio_df <- physio_merged_raw %>%
+  select(sfmm_1_t7_physio:sfmm_3_t7_physio)
+
+psych::alpha(sfmm_t7_physio_df)
+
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(sfmm_t8_physio = rowMeans(select(., sfmm_1_t8_physio:sfmm_3_t8_physio)))
+
+sfmm_t8_physio_df <- physio_merged_raw %>%
+  select(sfmm_1_t8_physio:sfmm_3_t8_physio)
+
+psych::alpha(sfmm_t8_physio_df)
+
+
+```
+
+### Rescale items for CMM
+
+```{r}
+
+# Rescale items from a 1-6 to a 0-5 scale
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(cmm_1_t5_physio:cmm_4_t5_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(cmm_1_t7_physio:cmm_4_t7_physio), ~.-1))
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(across(c(cmm_1_t8_physio:cmm_4_t8_physio), ~.-1))
+
+```
+
+
+
+Reverse Scoring CMM
+
+```{r}
+#T5 Reverse Scoring 
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(cmm_1_t5_physio = 5 - cmm_1_t5_physio,
+         cmm_2_t5_physio = 5 - cmm_2_t5_physio,
+         cmm_3_t5_physio = 5 - cmm_3_t5_physio,
+         cmm_4_t5_physio = 5 - cmm_4_t5_physio) 
+
+
+#T7 Reverse Scoring
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(cmm_1_t7_physio = 5 - cmm_1_t7_physio,
+         cmm_2_t7_physio = 5 - cmm_2_t7_physio,
+         cmm_3_t7_physio = 5 - cmm_3_t7_physio,
+         cmm_4_t7_physio = 5 - cmm_4_t7_physio) 
+
+
+#T8 Reverse Scoring
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(cmm_1_t8_physio = 5 - cmm_1_t8_physio,
+         cmm_2_t8_physio = 5 - cmm_2_t8_physio,
+         cmm_3_t8_physio = 5 - cmm_3_t8_physio,
+         cmm_4_t8_physio = 5 - cmm_4_t8_physio) 
+
+```
+
+Calculate summary scores and alphas for CMM
+
+```{r}
+
+# T5 
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(cmm_t5_physio = rowMeans(select(., cmm_1_t5_physio:cmm_4_t5_physio)))
+
+cmm_t5_physio_df  <- physio_merged_raw %>% 
+  select(cmm_1_t5_physio:cmm_4_t5_physio)
+
+psych::alpha(cmm_t5_physio_df)
+
+# T7 
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(cmm_t7_physio = rowMeans(select(., cmm_1_t7_physio:cmm_4_t7_physio)))
+
+cmm_t7_physio_df  <- physio_merged_raw %>% 
+  select(cmm_1_t7_physio:cmm_4_t7_physio)
+
+psych::alpha(cmm_t7_physio_df)
+
+# T8 
+
+physio_merged_raw <- physio_merged_raw %>%
+  mutate(cmm_t8_physio = rowMeans(select(., cmm_1_t8_physio:cmm_4_t8_physio)))
+
+cmm_t8_physio_df  <- physio_merged_raw %>% 
+  select(cmm_1_t8_physio:cmm_4_t8_physio)
+
+psych::alpha(cmm_t8_physio_df)
+
+```
+
+## Pandemic-Related Hardships
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# T5
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(prh_t5_physio = rowSums(select(.,prh_routine_t5_physio, prh_income_t5_physio,  prh_food_t5_physio, prh_housing_t5_physio, prh_medical_t5_physio, prh_mental_t5_physio, prh_support_t5_physio, prh_stress_t5_physio, prh_discord_t5_physio, prh_care_t5_physio)))
+
+prh_t5_physio_df <- physio_merged_raw %>% 
+  select(prh_routine_t5_physio, prh_income_t5_physio,  prh_food_t5_physio, prh_housing_t5_physio, prh_medical_t5_physio, prh_mental_t5_physio, prh_support_t5_physio, prh_stress_t5_physio, prh_discord_t5_physio, prh_care_t5_physio)
+
+psych::alpha(prh_t5_physio_df)
+
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(prh_t8_physio = rowSums(select(.,prh_routine_t8_physio, prh_income_t8_physio,  prh_food_t8_physio, prh_housing_t8_physio, prh_medical_t8_physio, prh_mental_t8_physio, prh_support_t8_physio, prh_stress_t8_physio, prh_discord_t8_physio, prh_care_t8_physio)))
+
+prh_t8_physio_df <- physio_merged_raw %>% 
+  select(prh_routine_t8_physio, prh_income_t8_physio,  prh_food_t8_physio, prh_housing_t8_physio, prh_medical_t8_physio, prh_mental_t8_physio, prh_support_t8_physio, prh_stress_t8_physio, prh_discord_t8_physio, prh_care_t8_physio)
+
+psych::alpha(prh_t8_physio_df)
+
+
+```
+
+## Trait Optimism
+
+### Rescale and reverse-code items
+
+```{r}
+
+# Rescale items from a 1-5 to a 0-4 scale
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(optimism_1_t8_physio = optimism_1_t8_physio - 1,
+         optimism_2_t8_physio = optimism_2_t8_physio - 1)
+
+# Reverse-score item 2
+
+physio_merged_raw[ ,"optimism_2_t8_physio"] <- 4 - physio_merged_raw[ ,"optimism_2_t8_physio"]
+
+```
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(optimism_t8_physio = rowSums(select(.,optimism_1_t8_physio, optimism_2_t8_physio)))
+
+optimism_t8_physio_df <- physio_merged_raw %>% 
+  select(optimism_1_t8_physio, optimism_2_t8_physio)
+
+psych::alpha(optimism_t8_physio_df)
+
+
+
+```
+
+
+
+## Self-Efficacy
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# Self-efficacy not assessed at T5 for physio branch
+
+# T8
+
+physio_merged_raw <- physio_merged_raw %>% 
+  mutate(self_efficacy_t8_physio = rowMeans(select(.,self_efficacy_1_t8_physio, self_efficacy_2_t8_physio,
+                                                        self_efficacy_3_t8_physio)))
+
+self_efficacy_t8_physio_df <- physio_merged_raw %>% 
+  select(self_efficacy_1_t8_physio, self_efficacy_2_t8_physio,
+                                                        self_efficacy_3_t8_physio)
+
+psych::alpha(self_efficacy_t8_physio_df)
+
+
+
+```
+
+
 # Make and export identifying key
 
 ```{r}
 
 # Add participant_id column
 
-physio_merged_raw <- id_key %>% 
-  select(participant_id, RecipientEmail) %>% 
-  inner_join(physio_merged_raw, by = "RecipientEmail")
+id_key <- id_key %>% 
+  select(RecipientEmail, participant_id)
+
+physio_merged_raw <- left_join(physio_merged_raw, id_key, by = "RecipientEmail")
 
 
 # Make identifying key
@@ -2100,6 +2351,19 @@ physio_merged_raw <- physio_merged_raw %>%
 
 ```
 
+# Create a new dataframe with summary scores, demographics, and qualitative measures
+
+```{r}
+
+physio_summaries_raw <- physio_merged_raw %>% 
+  select(participant_id, RecipientEmail, consent_t5_physio, consent_specimens_t5_physio, 
+         prh_routine_t5_physio:prh_ext_cov_free_t5_physio, vax_status_t5_physio:political_party_4_TEXT_t5_physio,
+         autoimmune_t5_physio, prh_self_cov_t6_physio:long_covid_desc_t6_physio, condition_physio,
+         cov_sym_t7_physio:cov_status_t7_physio, prh_routine_t8_physio:cov_vax_stat_t8_physio, extraversion_t8_physio:dependability_t8_physio, relationships_open_t8_physio:self_efficacy_t8_physio)
+
+```
+
+
 
 
 
@@ -2112,12 +2376,15 @@ write.csv(physio_id_key, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + 
 
 ```
 
-Write merged raw dataset to Box
+Write merged datasets to Box
 
 ```{r}
 
-write.csv(physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/Preprocessed Data/ROTP_Physio_Summaries.csv")
+write.csv(physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/Preprocessed Data/ROTP_Physio_Merged_Raw.csv")
+
+write.csv(physio_summaries_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP + Physio Preprocessing/Preprocessed Data/ROTP_Physio_Summaries_Raw.csv")
 
 
 ```
+
 

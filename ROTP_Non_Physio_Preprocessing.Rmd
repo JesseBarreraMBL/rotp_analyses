@@ -394,12 +394,16 @@ t4_completed_con <- t4_completed_non_physio %>%
 
 # T1
 
+colnames(t1_raw_non_physio) <- gsub("_t1", "", gsub("_t2", "", gsub("_t3", "", gsub("_t4", "", colnames(t1_raw_non_physio)))))
+
 colnames(t1_raw_non_physio) <- paste(colnames(t1_raw_non_physio), "t5", sep = "_") 
 
 t1_raw_non_physio <- t1_raw_non_physio %>% 
   rename("RecipientEmail" = "RecipientEmail_t5")
 
 # T2
+
+colnames(t2_raw_non_physio) <- gsub("_t1", "", gsub("_t2", "", gsub("_t3", "", gsub("_t4", "", colnames(t2_raw_non_physio)))))
 
 colnames(t2_raw_non_physio) <- paste(colnames(t2_raw_non_physio), "t6", sep = "_") 
 
@@ -408,12 +412,16 @@ t2_raw_non_physio <- t2_raw_non_physio %>%
 
 # T3
 
+colnames(t3_raw_non_physio) <- gsub("_t1", "", gsub("_t2", "", gsub("_t3", "", gsub("_t4", "", colnames(t3_raw_non_physio)))))
+
 colnames(t3_raw_non_physio) <- paste(colnames(t3_raw_non_physio), "t7", sep = "_") 
 
 t3_raw_non_physio <- t3_raw_non_physio %>% 
   rename("RecipientEmail" = "RecipientEmail_t7")
 
 # T4
+
+colnames(t4_raw_non_physio) <- gsub("_t1", "", gsub("_t2", "", gsub("_t3", "", gsub("_t4", "", colnames(t4_raw_non_physio)))))
 
 colnames(t4_raw_non_physio) <- paste(colnames(t4_raw_non_physio), "t8", sep = "_") 
 
@@ -538,7 +546,8 @@ non_physio_merged_raw$religion_t5 <- gsub("4", "Jewish", gsub("12", "Christina",
 
 
 
-# Employment, Age, Gender, Race, Income, Marital Status, Political affiliation, Household composition, Caregiving 
+# Employment, Age, Gender, Race, Income, Marital Status, Political affiliation, 
+# Education, Household composition, Caregiving 
 # measured at T4 longitudinal for non-physio branch participants
 
 
@@ -574,11 +583,23 @@ colnames(non_physio_merged_raw) <- paste(colnames(non_physio_merged_raw), "non_p
 
 non_physio_merged_raw <- non_physio_merged_raw %>% 
   rename("RecipientEmail" = "RecipientEmail_non_physio",
+         "religion_non_physio" = "religion_t5_non_physio",
+         "phq_1_t5_non_physio" = "phq._1_t5_non_physio",
+         "phq_2_t5_non_physio" = "phq._2_t5_non_physio",
+         "phq_3_t5_non_physio" = "phq._3_t5_non_physio",
+         "phq_4_t5_non_physio" = "phq._4_t5_non_physio",
+         "self_efficacy_1_t5_non_physio" = "self.efficacy_1_t5_non_physio",
+         "self_efficacy_2_t5_non_physio" = "self.efficacy_2_t5_non_physio",
+         "self_efficacy_3_t5_non_physio" = "self.efficacy_3_t5_non_physio",
+         "global_health_base_1_t5_non_physio" = "global_health._1_t5_non_physio",
+         "global_health_base_2_t5_non_physio" = "global_health._2_t5_non_physio",
+         "global_health_base_3_t5_non_physio" = "global_health._3_t5_non_physio",
          "consent_t5_non_physio" = 'consent_pt_1_t5_non_physio',
          "duration_t5_non_physio" = "Duration..in.seconds._t5_non_physio",
          "duration_t6_non_physio" = "Duration..in.seconds._t6_non_physio",
          "duration_t7_non_physio" = "Duration..in.seconds._t7_non_physio",
          "duration_t8_non_physio" = "Duration..in.seconds._t8_non_physio",
+         "condition" = "Condition_t6_non_physio",
          "prh_employment_t5_non_physio" = "employment_t5_non_physio",
          "prh_employment_free_t5_non_physio" = "employment_16_TEXT_t5_non_physio",
          "covid_sym_2_free_t5_non_physio" = "covid_sym_2_29_TEXT_t5_non_physio",
@@ -587,6 +608,11 @@ non_physio_merged_raw <- non_physio_merged_raw %>%
          "cov_sym_free_t7_non_physio" = "COVID.Symptoms_29_TEXT_t7_non_physio",
          "cov_sym_t8_non_physio" = "COVID.Symptoms_t8_non_physio",
          "cov_sym_free_t8_non_physio" = "COVID.Symptoms_29_TEXT_t8_non_physio",
+         "extraversion_t8_non_physio" = "personality_1_t8_non_physio",
+         "openness_t8_non_physio" = "personality_2_t8_non_physio",
+         "stability_t8_non_physio" = "personality_3_t8_non_physio",
+         "warmness_t8_non_physio" = 'personality_4_t8_non_physio',
+         "dependability_t8_non_physio" = "personality_5_t8_non_physio",
          "seh_3_1_x_t8_non_physio" = "she_3_1_x_t8_non_physio",
          "seh_3_1_y_t8_non_physio" = "she_3_1_y_t8_non_physio",
          "seh_3_t8_non_physio" = "she_3_t8_non_physio",
@@ -1260,6 +1286,47 @@ psych::alpha(phq_depression_t8_non_physio_df)
 
 ```
 
+
+## Global Health - Combined (Physical, Mental, QoL)
+
+### Calculate summary scores
+
+```{r}
+
+# T5
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(global_health_full_t5_non_physio = rowMeans(select(., global_health_base_1_t5_non_physio:global_health_base_3_t5_non_physio)))
+
+global_health_full_t5_non_physio_df <- non_physio_merged_raw %>% 
+  select(global_health_base_1_t5_non_physio:global_health_base_3_t5_non_physio)
+
+psych::alpha(global_health_full_t5_non_physio_df)
+
+
+# T7
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(global_health_full_t7_non_physio = rowMeans(select(., global_wellbeing_1_t7_non_physio:global_wellbeing_3_t7_non_physio)))
+
+global_health_full_t7_non_physio_df <- non_physio_merged_raw %>% 
+  select(global_wellbeing_1_t7_non_physio:global_wellbeing_3_t7_non_physio)
+
+psych::alpha(global_health_full_t7_non_physio_df)
+
+# T8
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(global_health_full_t8_non_physio = rowMeans(select(., global_wellbeing_1_t8_non_physio:global_wellbeing_3_t8_non_physio)))
+
+global_health_full_t8_non_physio_df <- non_physio_merged_raw %>% 
+  select(global_wellbeing_1_t8_non_physio:global_wellbeing_3_t8_non_physio)
+
+psych::alpha(global_health_full_t8_non_physio_df)
+
+```
+
+
 ## Social Well-Being (MHC-SF Social Well-Being subscale)
 
 ### Rescale items
@@ -1636,6 +1703,232 @@ psych::alpha(primals_t8_non_physio_df)
 
 ```
 
+
+### Rescale items SFMM
+
+```{r}
+
+# Rescale items from a 1-6 to a 0-5 scale
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(across(c(sfmm_1_t5_non_physio:sfmm_3_t5_non_physio), ~.-1))
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(across(c(sfmm_1_t7_non_physio:sfmm_3_t7_non_physio), ~.-1))
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(across(c(sfmm_1_t8_non_physio:sfmm_3_t8_non_physio), ~.-1))
+
+
+```
+
+
+### Calculate summary scores SFMM
+
+```{r}
+
+# T5
+
+non_physio_merged_raw  <- non_physio_merged_raw  %>% 
+  mutate(sfmm_t5_non_physio = rowMeans(select(., sfmm_1_t5_non_physio:sfmm_3_t5_non_physio)))
+
+sfmm_t5_non_physio_df <- non_physio_merged_raw %>% 
+  select(sfmm_1_t5_non_physio:sfmm_3_t5_non_physio)
+
+psych::alpha(sfmm_t5_non_physio_df)
+
+# T7
+
+non_physio_merged_raw <- non_physio_merged_raw %>%
+  mutate(sfmm_t7_non_physio = rowMeans(select(., sfmm_1_t7_non_physio:sfmm_3_t7_non_physio)))
+
+sfmm_t7_non_physio_df <- non_physio_merged_raw %>%
+  select(sfmm_1_t7_non_physio:sfmm_3_t7_non_physio)
+
+psych::alpha(sfmm_t7_non_physio_df)
+
+
+# T8
+
+non_physio_merged_raw <- non_physio_merged_raw %>%
+  mutate(sfmm_t8_non_physio = rowMeans(select(., sfmm_1_t8_non_physio:sfmm_3_t8_non_physio)))
+
+sfmm_t8_non_physio_df <- non_physio_merged_raw %>%
+  select(sfmm_1_t8_non_physio:sfmm_3_t8_non_physio)
+
+psych::alpha(sfmm_t8_non_physio_df)
+
+
+```
+
+### Rescale items for CMM
+
+```{r}
+
+# Rescale items from a 1-6 to a 0-5 scale
+
+# T5 CMM assessed at T4 longitudinal
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(across(c(cmm_1_t7_non_physio:cmm_4_t7_non_physio), ~.-1))
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(across(c(cmm_1_t8_non_physio:cmm_4_t8_non_physio), ~.-1))
+
+```
+
+
+
+Reverse Scoring CMM
+
+```{r}
+
+#T7 Reverse Scoring
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(cmm_1_t7_non_physio = 5 - cmm_1_t7_non_physio,
+         cmm_2_t7_non_physio = 5 - cmm_2_t7_non_physio,
+         cmm_3_t7_non_physio = 5 - cmm_3_t7_non_physio,
+         cmm_4_t7_non_physio = 5 - cmm_4_t7_non_physio) 
+
+
+#T8 Reverse Scoring
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(cmm_1_t8_non_physio = 5 - cmm_1_t8_non_physio,
+         cmm_2_t8_non_physio = 5 - cmm_2_t8_non_physio,
+         cmm_3_t8_non_physio = 5 - cmm_3_t8_non_physio,
+         cmm_4_t8_non_physio = 5 - cmm_4_t8_non_physio) 
+
+```
+
+Calculate summary scores and alphas for CMM
+
+```{r}
+
+# T7 
+
+non_physio_merged_raw <- non_physio_merged_raw %>%
+  mutate(cmm_t7_non_physio = rowMeans(select(., cmm_1_t7_non_physio:cmm_4_t7_non_physio)))
+
+cmm_t7_non_physio_df  <- non_physio_merged_raw %>% 
+  select(cmm_1_t7_non_physio:cmm_4_t7_non_physio)
+
+psych::alpha(cmm_t7_non_physio_df)
+
+# T8 
+
+non_physio_merged_raw <- non_physio_merged_raw %>%
+  mutate(cmm_t8_non_physio = rowMeans(select(., cmm_1_t8_non_physio:cmm_4_t8_non_physio)))
+
+cmm_t8_non_physio_df  <- non_physio_merged_raw %>% 
+  select(cmm_1_t8_non_physio:cmm_4_t8_non_physio)
+
+psych::alpha(cmm_t8_non_physio_df)
+
+```
+
+## Pandemic-Related Hardships
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# T5
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(prh_t5_non_physio = rowSums(select(.,prh_routine_t5_non_physio:prh_income_t5_non_physio, prh_food_t5_non_physio:prh_care_t5_non_physio)))
+
+prh_t5_non_physio_df <- non_physio_merged_raw %>% 
+  select(prh_routine_t5_non_physio:prh_income_t5_non_physio, prh_food_t5_non_physio:prh_care_t5_non_physio)
+
+psych::alpha(prh_t5_non_physio_df)
+
+# T8
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(prh_t8_non_physio = rowSums(select(.,prh_routine_t8_non_physio, prh_income_t8_non_physio,  prh_food_t8_non_physio, prh_housing_t8_non_physio, prh_medical_t8_non_physio, prh_mental_t8_non_physio, prh_support_t8_non_physio, prh_stress_t8_non_physio, prh_discord_t8_non_physio, prh_care_t8_non_physio)))
+
+prh_t8_non_physio_df <- non_physio_merged_raw %>% 
+  select(prh_routine_t8_non_physio, prh_income_t8_non_physio,  prh_food_t8_non_physio, prh_housing_t8_non_physio, prh_medical_t8_non_physio, prh_mental_t8_non_physio, prh_support_t8_non_physio, prh_stress_t8_non_physio, prh_discord_t8_non_physio, prh_care_t8_non_physio)
+
+psych::alpha(prh_t8_non_physio_df)
+
+```
+
+## Trait Optimism
+
+### Rescale and reverse-code items
+
+```{r}
+
+# Rescale items from a 1-5 to a 0-4 scale
+
+# T8
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(optimism_1_t8_non_physio = optimism_1_t8_non_physio - 1,
+         optimism_2_t8_non_physio = optimism_2_t8_non_physio - 1)
+
+# Reverse-score item 2
+
+non_physio_merged_raw[ ,"optimism_2_t8_non_physio"] <- 4 - non_physio_merged_raw[ ,"optimism_2_t8_non_physio"]
+
+```
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# T8
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(optimism_t8_non_physio = rowSums(select(.,optimism_1_t8_non_physio, optimism_2_t8_non_physio)))
+
+optimism_t8_non_physio_df <- non_physio_merged_raw %>% 
+  select(optimism_1_t8_non_physio, optimism_2_t8_non_physio)
+
+psych::alpha(optimism_t8_non_physio_df)
+
+
+
+```
+
+## Self-Efficacy
+
+### Calculate summary scores and alphas
+
+```{r}
+
+# T5
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(self_efficacy_t5_non_physio = rowMeans(select(.,self_efficacy_1_t5_non_physio, self_efficacy_2_t5_non_physio,
+                                                        self_efficacy_3_t5_non_physio)))
+
+self_efficacy_t5_non_physio_df <- non_physio_merged_raw %>% 
+  select(self_efficacy_1_t5_non_physio, self_efficacy_2_t5_non_physio,
+                                                        self_efficacy_3_t5_non_physio)
+
+psych::alpha(self_efficacy_t5_non_physio_df)
+
+# T8
+
+non_physio_merged_raw <- non_physio_merged_raw %>% 
+  mutate(self_efficacy_t8_non_physio = rowMeans(select(.,self_efficacy_1_t8_non_physio, self_efficacy_2_t8_non_physio,
+                                                        self_efficacy_3_t8_non_physio)))
+
+self_efficacy_t8_non_physio_df <- non_physio_merged_raw %>% 
+  select(self_efficacy_1_t8_non_physio, self_efficacy_2_t8_non_physio,
+                                                        self_efficacy_3_t8_non_physio)
+
+psych::alpha(self_efficacy_t8_non_physio_df)
+
+
+
+```
+
+
 # Make and export identifying key
 
 ```{r}
@@ -1668,6 +1961,19 @@ non_physio_merged_raw <- non_physio_merged_raw %>%
 
 ```
 
+## Create dataframe with demographics, qualitative responses, and summary scores
+
+```{r}
+
+non_physio_summaries_raw <- non_physio_merged_raw %>% 
+  select(RecipientEmail:vax_status_free_t5_non_physio, religion_non_physio:religion_free_t5_non_physio,
+         condition, cov_sym_t7_non_physio:COVID.Status_t7_non_physio, 
+         prh_routine_t8_non_physio:COVID.Vaccine.Statu_t8_non_physio, durability_1_t8_non_physio:durability_free_t8_non_physio, extraversion_t8_non_physio:dependability_t8_non_physio,
+         relationships_open_t8_non_physio:self_efficacy_t8_non_physio)
+
+```
+
+
 # Write ID key to Box
 
 ```{r}
@@ -1681,7 +1987,9 @@ write.csv(non_physio_id_key, "/Users/barreraj/Box Sync/COVID19/COVID Interventio
 
 ```{r}
 
-write.csv(non_physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP Non-Physio Preprocessing/Preprocessed Data/ROTP_Non_Physio_Summaries.csv")
+write.csv(non_physio_summaries_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP Non-Physio Preprocessing/Preprocessed Data/ROTP_Non_Physio_Summaries_Raw.csv")
+
+write.csv(non_physio_merged_raw, "/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses/ROTP Non-Physio Preprocessing/Preprocessed Data/ROTP_Non_Physio_Merged_Raw.csv")
 
 ```
 
