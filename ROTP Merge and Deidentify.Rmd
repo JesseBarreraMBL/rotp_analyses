@@ -26,8 +26,6 @@ library(ggplot2)
 # Set working directory
 
 setwd("/Users/barreraj/Box Sync/COVID19/COVID Intervention + Physio/Analyses")
-
-
 # Import 
 
 longitudinal <- read.csv("COVID Longitudinal Preprocessing/Preprocessed Data/Longitudinal_Preprocessed.csv")
