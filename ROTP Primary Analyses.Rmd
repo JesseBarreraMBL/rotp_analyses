@@ -5,10 +5,10 @@ output: html_document
 date: "2023-05-06"
 ---
 
-```{r}
+```{r setup, include=FALSE}
+library(knitr)
 
-
-knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = FALSE) 
 ```
 
 
@@ -46,79 +46,71 @@ merged_deidentified_long <- read.csv("merged_long_deidentified_treated.csv")
 
 ```
 
-# Primary Analyses
+# Examine correlations
 
-## Examine correlations between CO mindset and outcome variables
+## CO mindset and primary outcomes
 
-```{r  setup, warning=FALSE}
+```{r}
 
 # T5
 
 merged_deidentified_long_t1 <- merged_deidentified_long %>% 
   filter(timepoint == 1) 
 
-ggpairs(merged_deidentified_long_t1, 34:56, progress = FALSE)
-  
-# T6
-
-rotp_behavioral_long_t6 <- rotp_behavioral_long %>% 
-  filter(timepoint == 6)
-
-ggpairs(rotp_behavioral_long_t6, 157:170, progress = FALSE) 
+ggpairs(merged_deidentified_long_t1, c(42, 35:41, 50:53), progress = FALSE)
 
 # T7
 
-rotp_behavioral_long_t7 <- rotp_behavioral_long %>% 
-  filter(timepoint == 7)
+merged_deidentified_long_t3 <- merged_deidentified_long %>% 
+  filter(timepoint == 3) 
 
-ggpairs(rotp_behavioral_long_t7, 157:170, progress = FALSE)
+ggpairs(merged_deidentified_long_t3, c(42, 35:41, 50:53), progress = FALSE)
 
 # T8
 
-rotp_behavioral_long_t8 <- rotp_behavioral_long %>% 
-  filter(timepoint == 8)
+merged_deidentified_long_t4 <- merged_deidentified_long %>% 
+  filter(timepoint == 4) 
 
-rotp_behavioral_long %>% 
-  ggpairs(157:170, progress = FALSE)
-
-ggpairs(rotp_behavioral_long_t8, 157:170, progress = FALSE)
+ggpairs(merged_deidentified_long_t4, c(42, 35:41, 50:53), progress = FALSE)
 
 
 ```
 
-## Examine correlations between CO mindset, PTG, depression, and biomarkers
 
-```{r warning=FALSE}
+## CO mindset and secondary outcomes
+
+```{r}
 
 # T5
 
-rotp_behavioral_physio_adj_t1 <- rotp_behavioral_physio_adj %>% 
-  filter(timepoint == 1) %>% 
-  filter(branch == "physio") %>% 
-  select(c(participant_id, timepoint, co_mindset, ptgi_full, phq_depression, IL6._Log2Transformed, IL10_Log2Transformed, IL1B_Log2Transformed, TNFA_Log2Transformed, CRP_Log2Transformed)) 
-
-
-ggpairs(rotp_behavioral_physio_adj_t1, 3:10, progress = FALSE)
+ggpairs(merged_deidentified_long_t1, c(42:49), progress = FALSE)
 
 # T7
 
-rotp_behavioral_physio_adj_t2 <- rotp_behavioral_physio_adj %>% 
-  filter(timepoint == 2) %>% 
-  filter(branch == "physio") %>% 
-  select(c(participant_id, timepoint, co_mindset, ptgi_full, phq_depression, IL6._Log2Transformed, IL10_Log2Transformed, IL1B_Log2Transformed, TNFA_Log2Transformed, CRP_Log2Transformed)) 
-
-
-ggpairs(rotp_behavioral_physio_adj_t2, 3:10, progress = FALSE)
+ggpairs(merged_deidentified_long_t3, c(42:49), progress = FALSE)
 
 # T8
 
-rotp_behavioral_physio_adj_t3 <- rotp_behavioral_physio_adj %>% 
-  filter(timepoint == 3) %>% 
-  filter(branch == "physio") %>% 
-  select(c(participant_id, timepoint, co_mindset, ptgi_full, phq_depression, IL6._Log2Transformed, IL10_Log2Transformed, IL1B_Log2Transformed, TNFA_Log2Transformed, CRP_Log2Transformed)) 
+ggpairs(merged_deidentified_long_t4, c(42:49), progress = FALSE)
 
 
-ggpairs(rotp_behavioral_physio_adj_t3, 3:10, progress = FALSE)
+```
+
+CO mindset and mediators/moderators
+
+```{r}
+
+# T5
+
+ggpairs(merged_deidentified_long_t1, c(42, 54:57, 77:78), progress = FALSE)
+
+# T7
+
+ggpairs(merged_deidentified_long_t3, c(42, 54:56, 77:78), progress = FALSE)
+
+# T8
+
+ggpairs(merged_deidentified_long_t4, c(42, 54:57, 92, 97:101, 106), progress = FALSE)
 
 
 ```
@@ -477,15 +469,14 @@ ggplot(prh_simplified, aes(x = prh, y = phq_depression, color = condition)) +
 
 ```
 
+# Pimary Analyses
 
-## CO Mindset - Mixed Model
+## CO Mindset - Mixed Models
 
 ```{r}
 
-contrasts(as.factor(merged_deidentified_long$condition))<-contr.sum(2)
-contrasts(as.factor(merged_deidentified_long$timepoint))<-contr.sum(4)
 
-
+# Mixed model with categorical timepoint
 
 com.mm <- lmer(co_mindset ~ condition * as.factor(timepoint) + (1 | participant_id), 
                    data = merged_deidentified_long)

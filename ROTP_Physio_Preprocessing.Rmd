@@ -38,6 +38,7 @@ t3_raw <- read.csv("ROTP_Physio_T3_Raw.csv", na.strings = c("", " "))
 
 t4_raw <- read.csv("ROTP_Physio_T4_Raw.csv", na.strings = c("", " "))
 
+
 # Import list of participants who completed T1 blood sample
 
 t1_sample_completed <- read.csv("ROTP_Physio_T1_completed.csv")
@@ -685,7 +686,8 @@ physio_merged_raw <- physio_merged_raw %>%
                 "Finished_t3",
                 "age_t3":"autoimmune_t3",
                 "splenectomy_t3":"IVIG_t3",
-                "COVID.Status_t3":"autoimmune_t4",
+                "COVID.Status_t3":"primals_6_t3",
+                "EndDate_t4":"autoimmune_t4",
                 "splenectomy_t4":"prh_routine_t1_t4",
                 "prh_income_t1_t4",
                 "prh_food_t1_t4",
@@ -2331,10 +2333,10 @@ physio_id_key <- physio_merged_raw %>%
 # Remove unnecessary data from physio_merged
 
 physio_merged_raw <- physio_merged_raw %>% 
-  select(-c(Status_t5_physio, Progress_t5_physio, Finished_t5_physio, StartDate_t5_physio, duration_t5_physio, EndDate_t5_physio, RecipientLastName_t5_physio,
+  select(-c(Status_t5_physio, Progress_t5_physio, Finished_t5_physio, duration_t5_physio, EndDate_t5_physio, RecipientLastName_t5_physio,
          RecipientFirstName_t5_physio, LocationLatitude_t5_physio, LocationLongitude_t5_physio, hipaa_authorization_1_t5_physio,
          hipaa_authorization_2_t5_physio, first_name_t5_physio, last_name_t5_physio, address_t5_physio, apartment_t5_physio,
-         city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, Status_t6_physio, Progress_t6_physio, Finished_t6_physio, duration_t6_physio, StartDate_t6_physio, EndDate_t6_physio,
+         city_t5_physio, state_t5_physio, zipcode_t5_physio, text.agreement_t5_physio, phone.number_t5_physio, Status_t6_physio, Progress_t6_physio, Finished_t6_physio, duration_t6_physio, EndDate_t6_physio,
          RecipientFirstName_t6_physio, RecipientLastName_t6_physio, LocationLatitude_t6_physio, LocationLongitude_t6_physio,
          con_vid_1_time_First.Click_t6_physio:con_vid_2_time_Click.Count_t6_physio, 
          con_vid_3_time_First.Click_t6_physio:con_vid_3_time_Click.Count_t6_physio,
@@ -2345,9 +2347,8 @@ physio_merged_raw <- physio_merged_raw %>%
          Step.2.Vid.1.Time_First.Click_t6_physio:Step.2.Vid.1.Time_Click.Count_t6_physio,
          Part.2.Vid.2.Timing_First.Click_t6_physio:Part.2.Vid.2.Timing_Click.Count_t6_physio,
          Step.2.Vid.3.Time_First.Click_t6_physio:Step.2.Vid.3.Time_Click.Count_t6_physio,
-         Status_t7_physio, Progress_t7_physio, Finished_t7_physio, duration_t7_physio, StartDate_t7_physio, EndDate_t7_physio, RecipientFirstName_t7_physio, RecipientLastName_t7_physio, LocationLatitude_t7_physio, LocationLongitude_t7_physio, Status_t8_physio, Progress_t8_physio, Finished_t8_physio, duration_t8_physio, StartDate_t8_physio, EndDate_t8_physio,
+         Status_t7_physio, Progress_t7_physio, Finished_t7_physio, duration_t7_physio, EndDate_t7_physio, RecipientFirstName_t7_physio, RecipientLastName_t7_physio, LocationLatitude_t7_physio, LocationLongitude_t7_physio, Status_t8_physio, Progress_t8_physio, Finished_t8_physio, duration_t8_physio, EndDate_t8_physio,
          RecipientFirstName_t8_physio, RecipientLastName_t8_physio, LocationLatitude_t8_physio, LocationLongitude_t8_physio))
-
 
 ```
 
@@ -2356,16 +2357,12 @@ physio_merged_raw <- physio_merged_raw %>%
 ```{r}
 
 physio_summaries_raw <- physio_merged_raw %>% 
-  select(participant_id, RecipientEmail, consent_t5_physio, consent_specimens_t5_physio, 
+  select(participant_id, RecipientEmail, StartDate_t5_physio, consent_t5_physio, consent_specimens_t5_physio, 
          prh_routine_t5_physio:prh_ext_cov_free_t5_physio, vax_status_t5_physio:political_party_4_TEXT_t5_physio,
-         autoimmune_t5_physio, prh_self_cov_t6_physio:long_covid_desc_t6_physio, condition_physio,
-         cov_sym_t7_physio:cov_status_t7_physio, prh_routine_t8_physio:cov_vax_stat_t8_physio, extraversion_t8_physio:dependability_t8_physio, relationships_open_t8_physio:self_efficacy_t8_physio)
+         autoimmune_t5_physio, StartDate_t6_physio, prh_self_cov_t6_physio:long_covid_desc_t6_physio, condition_physio,
+         StartDate_t7_physio, cov_sym_t7_physio:cov_status_t7_physio, StartDate_t8_physio, prh_routine_t8_physio:cov_vax_stat_t8_physio, extraversion_t8_physio:dependability_t8_physio, relationships_open_t8_physio:self_efficacy_t8_physio)
 
 ```
-
-
-
-
 
 
 # Write ID key to Box
@@ -2386,5 +2383,3 @@ write.csv(physio_summaries_raw, "/Users/barreraj/Box Sync/COVID19/COVID Interven
 
 
 ```
-
-

@@ -37,8 +37,48 @@ physio <- read.csv("ROTP + Physio Preprocessing/Preprocessed Data/ROTP_Physio_Su
 
 non_physio <- read.csv("ROTP Non-Physio Preprocessing/Preprocessed Data/ROTP_Non_Physio_Summaries_Raw.csv")
 
+```
+
+# Create continuous timepoint variable "day"
+
+```{r}
+
+# physio
+
+physio <- physio %>% 
+  mutate(day_t5_physio = 0) %>% 
+  mutate(day_t6_physio = difftime(StartDate_t6_physio, StartDate_t5_physio, units = "days")) %>% 
+  mutate(day_t6_physio = gsub("days", "", day_t6_physio)) %>% 
+  mutate(day_t6_physio = round(as.numeric(day_t6_physio), digits = 0)) %>% 
+  mutate(day_t7_physio = difftime(StartDate_t7_physio, StartDate_t5_physio, units = "days")) %>% 
+  mutate(day_t7_physio = gsub("days", "", day_t7_physio)) %>% 
+  mutate(day_t7_physio = round(as.numeric(day_t7_physio), digits = 0)) %>% 
+   mutate(day_t8_physio = difftime(StartDate_t8_physio, StartDate_t5_physio, units = "days")) %>% 
+  mutate(day_t8_physio = gsub("days", "", day_t8_physio)) %>% 
+  mutate(day_t8_physio = round(as.numeric(day_t8_physio), digits = 0)) 
+
+# non_physio
+
+non_physio <- non_physio %>% 
+  mutate(day_t5_non_physio = 0) %>% 
+  mutate(day_t6_non_physio = difftime(StartDate_t6_non_physio, StartDate_t5_non_physio, units = "days")) %>% 
+  mutate(day_t6_non_physio = gsub("days", "", day_t6_non_physio)) %>% 
+  mutate(day_t6_non_physio = round(as.numeric(day_t6_non_physio), digits = 0)) %>% 
+  mutate(day_t7_non_physio = difftime(StartDate_t7_non_physio, StartDate_t5_non_physio, units = "days")) %>% 
+  mutate(day_t7_non_physio = gsub("days", "", day_t7_non_physio)) %>% 
+  mutate(day_t7_non_physio = round(as.numeric(day_t7_non_physio), digits = 0)) %>% 
+   mutate(day_t8_non_physio = difftime(StartDate_t8_non_physio, StartDate_t5_non_physio, units = "days")) %>% 
+  mutate(day_t8_non_physio = gsub("days", "", day_t8_non_physio)) %>% 
+  mutate(day_t8_non_physio = round(as.numeric(day_t8_non_physio), digits = 0)) 
+
+
+
+
+  
+
 
 ```
+
 
 # Merge datasets into wide format
 
@@ -94,18 +134,6 @@ non_physio_unshared <- non_physio_merged_wide[ ,c(unshared_columns_non_physio, "
 merged_wide <- left_join(merged_wide_shared, physio_unshared, by = "RecipientEmail")
 
 merged_wide <- left_join(merged_wide, non_physio_unshared, by = "RecipientEmail")
-
-```
-
-```{r}
-
-unique(merged_wide$branch)
-
-table(merged_wide$int_con_completion, merged_wide$condition, merged_wide$branch)
-
-table(merged_wide$participant_retention, merged_wide$condition, merged_wide$branch)
-
-
 
 ```
 
