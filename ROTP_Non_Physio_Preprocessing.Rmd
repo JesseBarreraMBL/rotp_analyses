@@ -1945,8 +1945,8 @@ non_physio_id_key <- non_physio_merged_raw %>%
 # Remove unnecessary identifying data from non_physio_merged_raw
 
 non_physio_merged_raw <- non_physio_merged_raw %>% 
-  select(-c(Status_t5_non_physio, Progress_t5_non_physio, StartDate_t5_non_physio, EndDate_t5_non_physio, LocationLatitude_t5_non_physio, 
-         LocationLongitude_t5_non_physio, Status_t6_non_physio, Progress_t6_non_physio, StartDate_t6_non_physio, EndDate_t6_non_physio,
+  select(-c(Status_t5_non_physio, Progress_t5_non_physio, EndDate_t5_non_physio, LocationLatitude_t5_non_physio, 
+         LocationLongitude_t5_non_physio, Status_t6_non_physio, Progress_t6_non_physio, EndDate_t6_non_physio,
           LocationLatitude_t6_non_physio, LocationLongitude_t6_non_physio,
          Part.1.Vid.1.Timing_First.Click_t6_non_physio:Part.1.Vid.1.Timing_Click.Count_t6_non_physio,
          Part.1.Vid.2.Timing_First.Click_t6_non_physio:Part.1.Vid.2.Timing_Click.Count_t6_non_physio,
@@ -1957,7 +1957,7 @@ non_physio_merged_raw <- non_physio_merged_raw %>%
          con_vid_3_time_First.Click_t6_non_physio:con_vid_3_time_Click.Count_t6_non_physio,
          con_vid_4_time_First.Click_t6_non_physio:con_vid_4_time_Click.Count_t6_non_physio,
          con_vid_5_time_First.Click_t6_non_physio:con_vid_5_time_Click.Count_t6_non_physio,
-         Status_t7_non_physio, Progress_t7_non_physio, StartDate_t7_non_physio, EndDate_t7_non_physio, LocationLatitude_t7_non_physio, LocationLongitude_t7_non_physio, Status_t8_non_physio, Progress_t8_non_physio, StartDate_t8_non_physio, EndDate_t8_non_physio, LocationLatitude_t8_non_physio, LocationLongitude_t8_non_physio))
+         Status_t7_non_physio, Progress_t7_non_physio, EndDate_t7_non_physio, LocationLatitude_t7_non_physio, LocationLongitude_t7_non_physio, Status_t8_non_physio, Progress_t8_non_physio, EndDate_t8_non_physio, LocationLatitude_t8_non_physio, LocationLongitude_t8_non_physio))
 
 ```
 
@@ -1966,9 +1966,9 @@ non_physio_merged_raw <- non_physio_merged_raw %>%
 ```{r}
 
 non_physio_summaries_raw <- non_physio_merged_raw %>% 
-  select(RecipientEmail:vax_status_free_t5_non_physio, religion_non_physio:religion_free_t5_non_physio,
-         condition, cov_sym_t7_non_physio:COVID.Status_t7_non_physio, 
-         prh_routine_t8_non_physio:COVID.Vaccine.Statu_t8_non_physio, durability_1_t8_non_physio:durability_free_t8_non_physio, extraversion_t8_non_physio:dependability_t8_non_physio,
+  select(StartDate_t5_non_physio, RecipientEmail:vax_status_free_t5_non_physio, religion_non_physio:religion_free_t5_non_physio,
+         condition, StartDate_t6_non_physio, StartDate_t7_non_physio, cov_sym_t7_non_physio:COVID.Status_t7_non_physio, 
+         StartDate_t8_non_physio, prh_routine_t8_non_physio:COVID.Vaccine.Statu_t8_non_physio, durability_1_t8_non_physio:durability_free_t8_non_physio, extraversion_t8_non_physio:dependability_t8_non_physio,
          relationships_open_t8_non_physio:self_efficacy_t8_non_physio)
 
 ```
